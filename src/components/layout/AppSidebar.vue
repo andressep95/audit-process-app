@@ -23,16 +23,7 @@
         class="p-1 rounded-md hover:bg-gray-100 focus:outline-none"
         :title="isCollapsed ? 'Expandir menú' : 'Colapsar menú'"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-6 w-6 text-gray-700"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
+        <component :is="createIcon('M4 6h16M4 10h16M4 14h16M4 18h16')" />
       </button>
     </div>
 
@@ -61,7 +52,7 @@
     <!-- Logout (fijo en la parte inferior) -->
     <div class="px-1 pb-4 mt-auto">
       <button
-        @click="handleLogout"
+        @click="showLogoutModal = true"
         class="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-gray-100 rounded-md"
       >
         <div class="w-6 h-6 flex items-center justify-center flex-shrink-0">
@@ -84,14 +75,28 @@
       </button>
     </div>
   </aside>
+
+  <!-- Modal de confirmación -->
+  <ConfirmationModal
+    v-model="showLogoutModal"
+    title="Cerrar sesión"
+    message="¿Estás seguro de que quieres cerrar sesión? Se perderá cualquier trabajo no guardado."
+    confirm-text="Cerrar sesión"
+    cancel-text="Cancelar"
+    variant="danger"
+    @confirm="handleLogout"
+    @cancel="showLogoutModal = false"
+  />
 </template>
 
 <script setup>
 import { ref, h } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
 const auth = useAuthStore()
 const isCollapsed = ref(true)
+const showLogoutModal = ref(false)
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -151,9 +156,7 @@ const menuItems = [
 ]
 
 const handleLogout = () => {
-  if (confirm('¿Seguro que quieres cerrar sesión?')) {
-    auth.logout()
-  }
+  auth.logout()
 }
 </script>
 
