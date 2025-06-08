@@ -31,7 +31,7 @@
     <div class="flex-1 overflow-y-auto">
       <nav class="mt-2">
         <ul class="space-y-1 px-1">
-          <li v-for="item in menuItems" :key="item.path">
+          <li v-for="item in visibleMenuItems" :key="item.path">
             <router-link
               :to="item.path"
               class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, h } from 'vue'
+import { ref, h, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 
@@ -119,6 +119,12 @@ const createIcon = (pathData) => {
     },
   }
 }
+
+// Función para verificar si el usuario es ADMIN
+const isAdmin = computed(() => {
+  //console.log('User data:', auth.user) // Ver qué datos tienes
+  return auth.isAdmin() || auth.hasRole('ADMIN')
+})
 
 const menuItems = [
   {
@@ -153,7 +159,28 @@ const menuItems = [
     title: 'Configuración',
     icon: createIcon('M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-6 0h6'),
   },
+  // Botón de administración - solo visible para ADMIN
+  {
+    path: '/admin/users',
+    title: 'Gestión de Usuarios',
+    icon: createIcon(
+      'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z',
+    ),
+    requiresAdmin: true,
+  },
 ]
+
+// Computed property para mostrar solo los elementos del menú que el usuario puede ver
+const visibleMenuItems = computed(() => {
+  return menuItems.filter((item) => {
+    // Si el item requiere permisos de admin, verificar si el usuario los tiene
+    if (item.requiresAdmin) {
+      return isAdmin.value
+    }
+    // Si no requiere permisos especiales, mostrar siempre
+    return true
+  })
+})
 
 const handleLogout = () => {
   auth.logout()

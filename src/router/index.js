@@ -1,6 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
-import { authGuard, guestGuard } from './guards'
+import { authGuard, guestGuard, adminGuard } from './guards'
 
 const routes = [
   {
@@ -33,6 +33,17 @@ const routes = [
         path: '/checklists',
         name: 'checklists',
         component: () => import('@/views/checklists/CheckListView.vue'),
+      },
+      // Nueva ruta protegida solo para ADMIN
+      {
+        path: '/admin/users',
+        name: 'users',
+        component: () => import('@/views/admin/UserView.vue'),
+        beforeEnter: adminGuard,
+        meta: {
+          requiresAdmin: true,
+          title: 'Gestión de Usuarios',
+        },
       },
     ],
   },
