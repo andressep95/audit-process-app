@@ -12,13 +12,13 @@
       <div class="flex space-x-3">
         <button
           @click="showCreateModal = true"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
         >
           Crear Usuario
         </button>
         <button
           @click="refreshUsers"
-          class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          class="bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 px-4 py-2 rounded-md text-sm font-medium transition-colors shadow-sm"
         >
           Actualizar
         </button>
