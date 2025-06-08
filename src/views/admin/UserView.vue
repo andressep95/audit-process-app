@@ -71,11 +71,6 @@
               Estado
             </th>
             <th
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Último acceso
-            </th>
-            <th
               class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Acciones
@@ -104,15 +99,17 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
               {{ user.email }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                v-for="role in user.roles"
-                :key="role"
-                :class="getRoleClass(role)"
-                class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mr-1"
-              >
-                {{ role }}
-              </span>
+            <td class="px-6 py-4">
+              <div class="flex flex-wrap gap-1">
+                <span
+                  v-for="role in filteredRoles(user.roles)"
+                  :key="role"
+                  :class="getRoleClass(role)"
+                  class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                >
+                  {{ role }}
+                </span>
+              </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span
@@ -121,9 +118,6 @@
               >
                 {{ user.enabled ? 'Activo' : 'Inactivo' }}
               </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ formatDate(user.lastLogin) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
               <button
@@ -173,18 +167,38 @@
         </p>
       </div>
     </div>
+    <UserCreateModal
+      :show="showCreateModal"
+      @close="showCreateModal = false"
+      @submit="createUser"
+    />
+    <NotificationModal
+      :show="showNotification"
+      :type="notificationType"
+      :title="notificationTitle"
+      :message="notificationMessage"
+      @close="showNotification = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import UserService from '@/services/UserService'
+import UserCreateModal from '@/components/forms/UserCreateForm.vue'
+import NotificationModal from '@/components/common/NotificationModal.vue'
 
 // Estado reactivo
 const users = ref([])
 const searchTerm = ref('')
 const showCreateModal = ref(false)
 const loading = ref(false)
+
+// Notificación
+const showNotification = ref(false)
+const notificationType = ref('success')
+const notificationTitle = ref('')
+const notificationMessage = ref('')
 
 // Computed properties
 const filteredUsers = computed(() => {
@@ -217,6 +231,27 @@ const refreshUsers = () => {
   loadUsers()
 }
 
+const createUser = async (userData) => {
+  try {
+    await UserService.createUser(userData)
+
+    // Mostrar notificación de éxito
+    notificationType.value = 'success'
+    notificationTitle.value = 'Usuario creado'
+    notificationMessage.value = 'El usuario se ha registrado correctamente.'
+    showNotification.value = true
+
+    showCreateModal.value = false
+    refreshUsers()
+  } catch (error) {
+    // Mostrar notificación de error
+    notificationType.value = 'error'
+    notificationTitle.value = 'Error al crear usuario'
+    notificationMessage.value = error.message || 'Ocurrió un error al intentar crear el usuario.'
+    showNotification.value = true
+  }
+}
+
 const editUser = (user) => {
   console.log('Editar usuario:', user)
   // Implementar lógica de edición
@@ -227,6 +262,13 @@ const toggleUserStatus = (user) => {
   console.log(`Usuario ${user.firstName} ${user.enabled ? 'activado' : 'desactivado'}`)
 }
 
+const filteredRoles = (roles) => {
+  return roles.filter((role) => {
+    // Mostrar solo roles completamente en mayúsculas y sin guiones/números
+    return role === role.toUpperCase() && /^[A-Z_]+$/.test(role)
+  })
+}
+
 const getRoleClass = (role) => {
   const classes = {
     ADMIN: 'text-purple-800 bg-purple-100',
@@ -234,15 +276,6 @@ const getRoleClass = (role) => {
     USER: 'text-gray-800 bg-gray-100',
   }
   return classes[role] || 'text-gray-800 bg-gray-100'
-}
-
-const formatDate = (date) => {
-  if (!date) return 'Nunca'
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
 }
 
 // Lifecycle

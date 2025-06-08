@@ -11,4 +11,13 @@ export default {
       throw error
     }
   },
+  async createUser(userData) {
+    try {
+      const response = await apiClient.post('/users', userData)
+      return response.data
+    } catch (error) {
+      console.error('Error creating user:', error)
+      throw error
+    }
+  },
 }
