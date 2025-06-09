@@ -1,59 +1,38 @@
 <template>
   <aside
-    :class="[
-      'bg-white shadow-sm border-r border-gray-200 flex flex-col h-[calc(100vh-4px)] transition-all rounded-xl mt-[4px]',
-      isCollapsed ? 'w-16' : 'w-48',
-    ]"
-    style="transition-duration: 700ms"
+    class="bg-white shadow-sm border-r border-gray-200 flex flex-col transition-all rounded-xl w-16 hover:w-48 h-full"
   >
-    <!-- Header + botón toggle -->
-    <div class="flex items-center justify-between p-4" :class="{ 'justify-center': isCollapsed }">
-      <h2
-        class="text-lg font-semibold text-gray-900 select-none transition-opacity duration-700 ease-in-out whitespace-nowrap"
-        :style="{
-          opacity: isCollapsed ? 0 : 1,
-          maxWidth: isCollapsed ? '0px' : '1000px',
-          overflow: 'hidden',
-        }"
-      >
-        Menú
-      </h2>
-      <button
-        @click="toggleSidebar"
-        class="p-1 rounded-md hover:bg-gray-100 focus:outline-none"
-        :title="isCollapsed ? 'Expandir menú' : 'Colapsar menú'"
-      >
-        <component :is="createIcon('M4 6h16M4 10h16M4 14h16M4 18h16')" />
-      </button>
+    <!-- Header -->
+    <div class="flex items-center px-4 py-4 min-h-[4rem] flex-shrink-0">
+      <img :src="logoPath" alt="CasaIdeas Logo" class="w-8 h-8 flex-shrink-0 object-contain" />
+      <h2 class="sidebar-text text-lg font-semibold text-gray-900 select-none ml-2">Menú</h2>
     </div>
 
-    <!-- Contenedor principal del menú con scroll -->
+    <!-- Menú con scroll interno si es necesario -->
     <div class="flex-1 overflow-y-auto">
-      <nav class="mt-2">
-        <ul class="space-y-1 px-1">
+      <nav class="px-1">
+        <ul class="space-y-1">
           <li v-for="item in visibleMenuItems" :key="item.path">
             <router-link
               :to="item.path"
-              class="flex items-center gap-3 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md"
+              class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md min-h-[2.5rem] transition-colors duration-200"
               active-class="bg-gray-100"
             >
               <div class="w-6 h-6 flex items-center justify-center flex-shrink-0">
                 <component :is="item.icon" />
               </div>
-              <span class="menu-text" :class="{ collapsed: isCollapsed }">
-                {{ item.title }}
-              </span>
+              <span class="sidebar-text ml-3">{{ item.title }}</span>
             </router-link>
           </li>
         </ul>
       </nav>
     </div>
 
-    <!-- Logout (fijo en la parte inferior) -->
-    <div class="px-1 pb-4 mt-auto">
+    <!-- Botón de logout (fijo) -->
+    <div class="px-1 pb-4 flex-shrink-0">
       <button
         @click="showLogoutModal = true"
-        class="flex items-center gap-3 w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-md"
+        class="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-md min-h-[2.5rem] transition-colors duration-200"
       >
         <div class="w-6 h-6 flex items-center justify-center flex-shrink-0">
           <svg
@@ -71,12 +50,11 @@
             />
           </svg>
         </div>
-        <span class="menu-text" :class="{ collapsed: isCollapsed }">Cerrar sesión</span>
+        <span class="sidebar-text ml-3">Cerrar sesión</span>
       </button>
     </div>
   </aside>
 
-  <!-- Modal de confirmación -->
   <ConfirmationModal
     v-model="showLogoutModal"
     title="Cerrar sesión"
@@ -93,14 +71,11 @@
 import { ref, h, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+import logo from '@/assets/img/CasaIdeas-logo.webp'
 
 const auth = useAuthStore()
-const isCollapsed = ref(true)
 const showLogoutModal = ref(false)
-
-const toggleSidebar = () => {
-  isCollapsed.value = !isCollapsed.value
-}
+const logoPath = ref(logo)
 
 const createIcon = (pathData) => {
   return {
@@ -120,14 +95,11 @@ const createIcon = (pathData) => {
   }
 }
 
-// Función para verificar si el usuario es ADMIN
 const isAdmin = computed(() => {
-  //console.log('User data:', auth.user) // Ver qué datos tienes
   return auth.isAdmin() || auth.hasRole('ADMIN')
 })
 
 const menuItems = [
-  // Botón de administración - solo visible para ADMIN
   {
     path: '/admin/users',
     title: 'Usuarios',
@@ -170,14 +142,11 @@ const menuItems = [
   },
 ]
 
-// Computed property para mostrar solo los elementos del menú que el usuario puede ver
 const visibleMenuItems = computed(() => {
   return menuItems.filter((item) => {
-    // Si el item requiere permisos de admin, verificar si el usuario los tiene
     if (item.requiresAdmin) {
       return isAdmin.value
     }
-    // Si no requiere permisos especiales, mostrar siempre
     return true
   })
 })
@@ -188,20 +157,43 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.menu-text {
+/* Animación uniforme para todos los textos del sidebar */
+.sidebar-text {
   white-space: nowrap;
   overflow: hidden;
-  display: inline-block;
-  vertical-align: middle;
-  transition:
-    opacity 0.7s ease-in-out,
-    max-width 0.7s ease-in-out;
-  max-width: 200px;
-  opacity: 1;
-}
-
-.menu-text.collapsed {
+  transition: all 0.3s ease-in-out;
   opacity: 0;
   max-width: 0;
+  transform: translateX(-10px);
+}
+
+/* Cuando el sidebar está en hover, mostrar todos los textos */
+aside:hover .sidebar-text {
+  opacity: 1;
+  max-width: 200px;
+  transform: translateX(0);
+}
+
+/* Asegurar que el scroll sea suave */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 2px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
 }
 </style>

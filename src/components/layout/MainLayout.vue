@@ -1,9 +1,12 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50">
-    <div class="flex flex-1 min-h-0 p-1">
-      <AppSidebar />
-      <main class="flex-1 px-4 py-1 overflow-auto">
-        <router-view />
+  <div class="h-screen flex flex-col bg-gray-50 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden">
+      <!-- Sidebar ocupa altura exacta y NO genera scroll -->
+      <AppSidebar class="h-full overflow-hidden flex flex-col" />
+
+      <!-- Main ocupa el resto sin scroll -->
+      <main class="flex-1 overflow-hidden px-4 py-1 flex flex-col">
+        <router-view class="flex-1 overflow-hidden" />
       </main>
     </div>
   </div>
