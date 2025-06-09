@@ -100,13 +100,15 @@
                 <td class="px-4 py-3 whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="h-8 w-8 flex-shrink-0">
-                      <div
-                        class="h-8 w-8 rounded-full bg-black flex items-center justify-center shadow-sm"
-                      >
-                        <span class="text-xs font-semibold text-white">
-                          {{ user.firstName?.charAt(0)?.toUpperCase() || 'U' }}
-                        </span>
-                      </div>
+                      <button @click="editUser(user)" class="focus:outline-none">
+                        <div
+                          class="h-8 w-8 rounded-full bg-black flex items-center justify-center shadow-sm"
+                        >
+                          <span class="text-xs font-semibold text-white">
+                            {{ user.firstName?.charAt(0)?.toUpperCase() || 'U' }}
+                          </span>
+                        </div>
+                      </button>
                     </div>
                     <div class="ml-3">
                       <div class="text-sm font-semibold text-gray-900">
@@ -145,12 +147,6 @@
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end gap-2">
-                    <button
-                      @click="editUser(user)"
-                      class="text-blue-600 hover:text-blue-800 transition-colors duration-150 font-medium text-sm"
-                    >
-                      Editar
-                    </button>
                     <button
                       @click="toggleUserStatus(user)"
                       :class="
@@ -218,6 +214,12 @@
       @close="showCreateModal = false"
       @submit="createUser"
     />
+    <UserEditModal
+      :show="showEditModal"
+      :userData="selectedUser"
+      @close="showEditModal = false"
+      @submit="updateUser"
+    />
     <NotificationModal
       :show="showNotification"
       :type="notificationType"
@@ -232,6 +234,7 @@
 import { ref, computed, onMounted } from 'vue'
 import UserService from '@/services/UserService'
 import UserCreateModal from '@/components/forms/UserCreateForm.vue'
+import UserEditModal from '@/components/forms/UserEditForm.vue'
 import NotificationModal from '@/components/common/NotificationModal.vue'
 import PaginationButtons from '@/components/common/Pagination.vue'
 
@@ -239,6 +242,8 @@ import PaginationButtons from '@/components/common/Pagination.vue'
 const users = ref([])
 const searchTerm = ref('')
 const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const selectedUser = ref(null)
 const loading = ref(false)
 
 // Notificación
@@ -249,7 +254,7 @@ const notificationMessage = ref('')
 
 // Paginación
 const currentPage = ref(1)
-const perPage = ref(10)
+const perPage = ref(6)
 
 // Computed properties
 const filteredUsers = computed(() => {
@@ -310,14 +315,51 @@ const createUser = async (userData) => {
   }
 }
 
-const editUser = (user) => {
-  console.log('Editar usuario:', user)
-  // Implementar lógica de edición
+const updateUser = async (userData) => {
+  try {
+    await UserService.updateUser(userData)
+
+    notificationType.value = 'success'
+    notificationTitle.value = 'Usuario actualizado'
+    notificationMessage.value = 'Los cambios se guardaron correctamente.'
+    showNotification.value = true
+
+    showEditModal.value = false
+    refreshUsers()
+  } catch (error) {
+    notificationType.value = 'error'
+    notificationTitle.value = 'Error al actualizar'
+    notificationMessage.value = error.message || 'Ocurrió un error al actualizar el usuario.'
+    showNotification.value = true
+  }
 }
 
-const toggleUserStatus = (user) => {
-  user.enabled = !user.enabled
-  console.log(`Usuario ${user.firstName} ${user.enabled ? 'activado' : 'desactivado'}`)
+const editUser = (user) => {
+  selectedUser.value = user
+  showEditModal.value = true
+}
+
+const toggleUserStatus = async (user) => {
+  const updatedStatus = !user.enabled
+  try {
+    await UserService.toggleUserStatus({
+      email: user.email,
+      enabled: updatedStatus,
+    })
+
+    user.enabled = updatedStatus
+
+    notificationType.value = 'success'
+    notificationTitle.value = 'Estado actualizado'
+    notificationMessage.value = `El usuario ha sido ${updatedStatus ? 'activado' : 'desactivado'} correctamente.`
+  } catch (error) {
+    notificationType.value = 'error'
+    notificationTitle.value = 'Error'
+    notificationMessage.value = 'No se pudo cambiar el estado del usuario.'
+    console.error(error)
+  } finally {
+    showNotification.value = true
+  }
 }
 
 const filteredRoles = (roles) => {

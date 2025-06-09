@@ -20,4 +20,24 @@ export default {
       throw error
     }
   },
+  async updateUser(userData) {
+    try {
+      const response = await apiClient.put('/users', userData)
+      return response.data
+    } catch (error) {
+      console.error('Error creating user:', error)
+      throw error
+    }
+  },
+  async toggleUserStatus({ email, enabled }) {
+    try {
+      const response = await apiClient.patch('/users', null, {
+        params: { email, enabled },
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error toggling user status:', error)
+      throw error
+    }
+  },
 }

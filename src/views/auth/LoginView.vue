@@ -20,8 +20,8 @@
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
         </div>
-        <h1 class="text-2xl font-bold text-black">Dashboard</h1>
-        <p class="text-gray-600 text-sm">Gestión de usuarios</p>
+        <h1 class="text-2xl font-bold text-black">Audit Process App</h1>
+        <p class="text-gray-600 text-sm">Gestión de procesos de auditoría</p>
       </div>
 
       <div class="border-2 border-gray-100 shadow-lg rounded-lg">
