@@ -1,3 +1,4 @@
+// src/views/auth/LoginView.vue
 <template>
   <div class="min-h-screen bg-white flex items-center justify-center p-4">
     <div class="w-full max-w-md">
@@ -32,11 +33,15 @@
 
         <div class="p-6 pt-0">
           <LoginForm @submit="handleLogin" />
-          <div v-if="errorMessage" class="text-red-500 text-center mt-4">
-            {{ errorMessage }}
-          </div>
         </div>
       </div>
+      <NotificationModal
+        :show="showModal"
+        type="error"
+        title="Error de inicio de sesión"
+        :message="errorMessage"
+        @close="showModal = false"
+      />
     </div>
   </div>
 </template>
@@ -46,10 +51,13 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginForm from '@/components/forms/LoginForm.vue'
+import NotificationModal from '@/components/common/NotificationModal.vue' // <-- importar
 
 const router = useRouter()
 const authStore = useAuthStore()
 const errorMessage = ref('')
+
+const showModal = ref(false) // controla si se muestra el modal
 
 const handleLogin = async (credentials) => {
   try {
@@ -57,7 +65,8 @@ const handleLogin = async (credentials) => {
     const redirect = router.currentRoute.value.query.redirect || '/dashboard'
     router.push(redirect)
   } catch (error) {
-    errorMessage.value = error.message || 'Credenciales incorrectas'
+    errorMessage.value = error.response?.data?.error || error.message || 'Credenciales incorrectas'
+    showModal.value = true
   }
 }
 </script>

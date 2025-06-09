@@ -1,3 +1,4 @@
+// src/componnents/forms/LoginForm.vue
 <template>
   <form @submit.prevent="submitForm" class="space-y-4">
     <div class="space-y-2">
@@ -137,12 +138,15 @@ const form = ref({
 const loading = ref(false)
 const showPassword = ref(false)
 
-const submitForm = () => {
+const submitForm = async () => {
   loading.value = true
-  emit('submit', {
-    username: form.value.username,
-    password: form.value.password,
-  })
-  loading.value = false
+  try {
+    await emit('submit', {
+      username: form.value.username,
+      password: form.value.password,
+    })
+  } finally {
+    loading.value = false
+  }
 }
 </script>

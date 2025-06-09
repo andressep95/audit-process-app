@@ -24,8 +24,7 @@ apiClient.interceptors.request.use(
 // Interceptor para manejar respuestas
 apiClient.interceptors.response.use(
   (response) => {
-    // Si la respuesta incluye un nuevo access_token, actualizarlo
-    if (response.data && response.data.access_token) {
+    if (response.data?.access_token) {
       const authStore = useAuthStore()
       authStore.setAuthData(response.data)
     }
@@ -34,10 +33,11 @@ apiClient.interceptors.response.use(
   async (error) => {
     const authStore = useAuthStore()
 
-    // Si es 401, significa que el token expiró y el refresh falló
-    if (error.response?.status === 401) {
-      authStore.logout()
-      return Promise.reject(error)
+    // No hacer logout si es un error en el login
+    const isLoginRequest = error.config?.url?.includes('/auth/login')
+
+    if (error.response?.status === 401 && !isLoginRequest) {
+      await authStore.logout()
     }
 
     return Promise.reject(error)
