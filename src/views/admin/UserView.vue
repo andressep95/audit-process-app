@@ -15,13 +15,13 @@
           <div class="flex flex-wrap gap-3">
             <button
               @click="showCreateModal = true"
-              class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              class="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
             >
               Crear Usuario
             </button>
             <button
               @click="refreshUsers"
-              class="bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              class="bg-gray-50 hover:bg-gray-100 text-gray-800 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
             >
               Actualizar
             </button>
@@ -33,7 +33,8 @@
               v-model="searchTerm"
               type="text"
               placeholder="Buscar usuarios..."
-              class="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white min-w-[280px]"
+              class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white min-w-[280px]"
+              @input="resetPagination"
             />
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
               <svg
@@ -56,7 +57,7 @@
     </div>
 
     <!-- Contenedor para la tabla de usuarios -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
       <div class="p-6">
         <!-- Tabla de usuarios -->
         <div class="rounded-2xl overflow-hidden">
@@ -92,7 +93,7 @@
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
               <tr
-                v-for="user in filteredUsers"
+                v-for="user in paginatedUsers"
                 :key="user.id"
                 class="hover:bg-gray-50 transition-colors duration-150"
               >
@@ -186,17 +187,29 @@
                 />
               </svg>
             </div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">No hay usuarios</h3>
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">
+              {{ searchTerm ? 'No se encontraron resultados' : 'No hay usuarios registrados' }}
+            </h3>
             <p class="text-sm text-gray-500 max-w-sm mx-auto">
               {{
                 searchTerm
-                  ? 'No se encontraron usuarios con ese criterio.'
-                  : 'Comienza creando tu primer usuario.'
+                  ? 'Intenta con otro término de búsqueda'
+                  : 'Comienza creando tu primer usuario'
               }}
             </p>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Botones de paginación fuera del contenedor principal -->
+    <div v-if="filteredUsers.length > 0" class="flex justify-center">
+      <PaginationButtons
+        :current-page="currentPage"
+        :per-page="perPage"
+        :total-items="filteredUsers.length"
+        @page-changed="handlePageChange"
+      />
     </div>
 
     <!-- Modales -->
@@ -220,6 +233,7 @@ import { ref, computed, onMounted } from 'vue'
 import UserService from '@/services/UserService'
 import UserCreateModal from '@/components/forms/UserCreateForm.vue'
 import NotificationModal from '@/components/common/NotificationModal.vue'
+import PaginationButtons from '@/components/common/Pagination.vue'
 
 // Estado reactivo
 const users = ref([])
@@ -232,6 +246,10 @@ const showNotification = ref(false)
 const notificationType = ref('success')
 const notificationTitle = ref('')
 const notificationMessage = ref('')
+
+// Paginación
+const currentPage = ref(1)
+const perPage = ref(10)
 
 // Computed properties
 const filteredUsers = computed(() => {
@@ -248,11 +266,18 @@ const filteredUsers = computed(() => {
   )
 })
 
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * perPage.value
+  const end = start + perPage.value
+  return filteredUsers.value.slice(start, end)
+})
+
 // Métodos
 const loadUsers = async () => {
   loading.value = true
   try {
     users.value = await UserService.getUsers()
+    currentPage.value = 1 // Resetear a la primera página al cargar nuevos datos
   } catch (error) {
     console.error('Error loading users:', error)
   } finally {
@@ -297,7 +322,6 @@ const toggleUserStatus = (user) => {
 
 const filteredRoles = (roles) => {
   return roles.filter((role) => {
-    // Mostrar solo roles completamente en mayúsculas y sin guiones/números
     return role === role.toUpperCase() && /^[A-Z_]+$/.test(role)
   })
 }
@@ -309,6 +333,14 @@ const getRoleClass = (role) => {
     USER: 'text-gray-800 bg-gray-100',
   }
   return classes[role] || 'text-gray-800 bg-gray-100'
+}
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+}
+
+const resetPagination = () => {
+  currentPage.value = 1
 }
 
 // Lifecycle
