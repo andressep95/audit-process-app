@@ -8,7 +8,10 @@ const routes = [
     name: 'login',
     component: () => import('@/views/auth/LoginView.vue'),
     beforeEnter: guestGuard,
-    meta: { layout: 'empty' },
+    meta: {
+      layout: 'empty',
+      transition: 'scale',
+    },
   },
   {
     path: '/',
@@ -23,16 +26,28 @@ const routes = [
         path: '/dashboard',
         name: 'dashboard',
         component: () => import('@/views/dashboard/DashboardView.vue'),
+        meta: {
+          transition: 'scale',
+          title: 'Dashboard',
+        },
       },
       {
         path: '/audits',
         name: 'auditView',
         component: () => import('@/views/audits/AuditView.vue'),
+        meta: {
+          transition: 'scale',
+          title: 'Auditorías',
+        },
       },
       {
         path: '/checklists',
         name: 'checklists',
         component: () => import('@/views/checklists/CheckListView.vue'),
+        meta: {
+          transition: 'slide-up',
+          title: 'Checklists',
+        },
       },
       // Nueva ruta protegida solo para ADMIN
       {
@@ -43,6 +58,7 @@ const routes = [
         meta: {
           requiresAdmin: true,
           title: 'Gestión de Usuarios',
+          transition: 'scale',
         },
       },
     ],
@@ -56,6 +72,14 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  // Scroll behavior suave
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0, behavior: 'smooth' }
+    }
+  },
 })
 
 export default router

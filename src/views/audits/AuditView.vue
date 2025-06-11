@@ -7,97 +7,300 @@
       @cerrar="onFormularioCerrado"
     />
     <div v-else class="p-6">
-      <h2 class="text-xl font-bold mb-4">Auditoría en curso</h2>
+      <!-- Header del Módulo -->
       <div
         @click="mostrarFormulario = true"
-        class="bg-white shadow rounded p-4 space-y-2 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+        class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
       >
-        <p><strong>Tienda:</strong> {{ modulo.tienda }}</p>
-        <p><strong>Jefe de Tienda:</strong> {{ modulo.jefeTienda }}</p>
-        <p><strong>Auditor:</strong> {{ modulo.auditor }}</p>
-        <p><strong>Fecha de Auditoría:</strong> {{ modulo.fechaAuditoria }}</p>
-        <p><strong>Estado:</strong> {{ modulo.estado }}</p>
-        <p><strong>Observaciones:</strong> {{ modulo.observacionesGenerales }}</p>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-gray-700"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </div>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-800">
+                  {{ modulo.tienda || 'Proceso de Auditoria' }}
+                </h2>
+                <span
+                  class="px-2 py-1 border border-gray-200 text-gray-600 bg-white shadow-sm rounded text-sm"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-3 w-3 mr-1 inline"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  {{ modulo.estado ? 'Completa' : 'Incompleta' }}
+                </span>
+              </div>
+              <p class="text-gray-500 text-base">
+                Auditoría en curso • {{ modulo.fechaAuditoria }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 text-gray-800">
+                <svg
+                  v-if="modulo.estado"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-green-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5 text-yellow-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span class="font-semibold">{{
+                  modulo.estado ? 'Completada' : 'En progreso'
+                }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Información del equipo -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-100">
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">País</p>
+                <p class="font-medium text-gray-800">
+                  {{ modulo.pais || 'No especificado' }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">Jefe de Tienda</p>
+                <p class="font-medium text-gray-800">
+                  {{ modulo.jefeTienda || 'No especificado' }}
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">Auditor</p>
+                <p class="font-medium text-gray-800">{{ modulo.auditor || 'No especificado' }}</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">Fecha</p>
+                <p class="font-medium text-gray-800">{{ modulo.fechaAuditoria }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="mt-6 pt-6 border-t border-gray-100">
+            <div class="flex items-start gap-3">
+              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Observaciones</p>
+                <p class="font-medium text-gray-800">
+                  {{ modulo.observacionesGenerales || 'No hay observaciones registradas' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import AuditModuleForm from '@/components/forms/AuditModuleForm.vue'
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import { decodeJWT } from '@/utils/jwt'
+import AuditModuleForm from '@/components/forms/AuditModuleForm.vue'
+import { useAuditStore } from '@/stores/auditStore'
+import { decodeJWT } from '@/utils/jwt' // <-- Importamos decodeJWT
+import type { Modulo } from '@/models/models'
 
+const auditStore = useAuditStore()
 const mostrarFormulario = ref(true)
 
-const modulo = ref({
+// Función para obtener el auditor desde el token JWT
+function obtenerAuditorDesdeToken(): string {
+  const token = localStorage.getItem('access_token') // Cambia la key si usas otra
+  if (!token) return ''
+  const decoded = decodeJWT(token)
+  // Suponiendo que el nombre del auditor está en "preferred_username" o "name"
+  return decoded?.preferred_username ?? decoded?.name ?? ''
+}
+
+const modulo = ref<Modulo>({
+  pais: '',
   tienda: '',
   jefeTienda: '',
-  auditor: '',
+  auditor: obtenerAuditorDesdeToken(), // <-- Aquí asignamos el nombre del auditor desde el token
   fechaAuditoria: dayjs().format('DD/MM/YYYY'),
-  estado: 'incompleta',
+  estado: false,
   observacionesGenerales: '',
+  subModulo: [],
 })
 
 // Cargar datos desde localStorage
 const cargarDesdeLocalStorage = () => {
-  const hoy = dayjs().format('DD/MM/YYYY')
-  const hoyISO = dayjs().format('YYYY-MM-DD')
   const draft = localStorage.getItem('auditDraft')
+  const hoyISO = dayjs().format('YYYY-MM-DD')
 
   if (draft) {
     try {
       const parsed = JSON.parse(draft)
       const [day, month, year] = parsed.fechaAuditoria.split('/')
-      const draftISODate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+      const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
-      if (draftISODate === hoyISO) {
+      if (draftISO === hoyISO) {
+        // Actualizar auditor por si cambió el token
+        parsed.auditor = obtenerAuditorDesdeToken()
         modulo.value = parsed
         mostrarFormulario.value = false
-        return
       } else {
         localStorage.removeItem('auditDraft')
       }
     } catch (e) {
-      console.error('Error parsing draft:', e)
+      console.error('Error al leer el borrador:', e)
       localStorage.removeItem('auditDraft')
     }
   }
-
-  iniciarNuevoFormulario()
 }
 
-const iniciarNuevoFormulario = () => {
-  const token = localStorage.getItem('access_token')
-  let auditor = ''
-
-  if (token) {
-    const decoded = decodeJWT(token)
-    auditor = decoded.preferred_username || decoded.name || 'Desconocido'
-  }
-
-  modulo.value = {
-    tienda: '',
-    jefeTienda: '',
-    auditor,
-    fechaAuditoria: dayjs().format('DD/MM/YYYY'),
-    estado: 'incompleta',
-    observacionesGenerales: '',
-  }
-  mostrarFormulario.value = true
-}
-
-const onFormularioGuardado = () => {
-  // Cuando se guarda definitivamente, limpiamos el draft
-  localStorage.removeItem('auditDraft')
+const onFormularioGuardado = (moduloGuardado: Modulo) => {
+  modulo.value = moduloGuardado
   mostrarFormulario.value = false
+  localStorage.setItem('auditDraft', JSON.stringify(moduloGuardado))
 }
 
 const onFormularioCerrado = () => {
-  // Al cerrar sin guardar, mantenemos los datos en localStorage
   mostrarFormulario.value = false
 }
 
-onMounted(cargarDesdeLocalStorage)
+onMounted(() => {
+  cargarDesdeLocalStorage()
+})
 </script>

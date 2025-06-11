@@ -232,7 +232,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import UserService from '@/services/UserService'
+import UserService from '@/services/userService'
 import UserCreateModal from '@/components/forms/UserCreateForm.vue'
 import UserEditModal from '@/components/forms/UserEditForm.vue'
 import NotificationModal from '@/components/common/NotificationModal.vue'

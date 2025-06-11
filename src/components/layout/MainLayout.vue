@@ -6,7 +6,11 @@
     >
       <AppSidebar class="h-full overflow-hidden flex flex-col" />
       <main class="flex-1 overflow-hidden px-4 py-1 flex flex-col">
-        <router-view class="flex-1 overflow-hidden" />
+        <router-view v-slot="{ Component, route }" class="flex-1 overflow-hidden">
+          <transition :name="route.meta.transition || 'fade'" mode="out-in" appear>
+            <component :is="Component" :key="route.path" class="flex-1 overflow-hidden" />
+          </transition>
+        </router-view>
       </main>
     </div>
 
@@ -52,3 +56,80 @@ const handleAuditCancel = () => {
   showAuditModal.value = false
 }
 </script>
+
+<style scoped>
+/* Transición fade (por defecto) */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Transición slide desde la derecha */
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: all 0.4s ease-in-out;
+}
+
+.slide-right-enter-from {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+.slide-right-leave-to {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+/* Transición slide desde la izquierda */
+.slide-left-enter-active,
+.slide-left-leave-active {
+  transition: all 0.4s ease-in-out;
+}
+
+.slide-left-enter-from {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+.slide-left-leave-to {
+  transform: translateX(30px);
+  opacity: 0;
+}
+
+/* Transición slide up */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.35s ease-out;
+}
+
+.slide-up-enter-from {
+  transform: translateY(20px);
+  opacity: 0;
+}
+
+.slide-up-leave-to {
+  transform: translateY(-20px);
+  opacity: 0;
+}
+
+/* Transición scale (zoom suave) */
+.scale-enter-active,
+.scale-leave-active {
+  transition: all 0.3s ease;
+}
+
+.scale-enter-from {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.scale-leave-to {
+  transform: scale(1.05);
+  opacity: 0;
+}
+</style>
