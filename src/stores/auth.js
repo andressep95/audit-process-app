@@ -122,14 +122,63 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // Modificamos el método clearAuthData para que solo limpie lo relacionado con autenticación
     clearAuthData() {
+      // Limpiar el estado
       this.accessToken = null
       this.user = null
       this.tokenExpiry = null
 
+      // Limpiar solo los items de autenticación del localStorage
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
       localStorage.removeItem('token_expiry')
+
+      // Limpiar sessionStorage por si acaso (opcional)
+      sessionStorage.removeItem('auditAccepted')
+    },
+
+    // Añadimos un método nuevo para limpiar drafts antiguos
+    clearOldDrafts() {
+      try {
+        const hoy = new Date().toLocaleDateString('es-CL')
+        const hoyISO = new Date().toISOString().split('T')[0] // Formato YYYY-MM-DD
+
+        // Limpiar auditDraft
+        const draft = localStorage.getItem('auditDraft')
+        if (draft) {
+          const parsed = JSON.parse(draft)
+          const draftDate = parsed.fechaAuditoria // Formato DD/MM/YYYY
+
+          // Convertir a formato comparable
+          const [day, month, year] = draftDate.split('/')
+          const draftISODate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+
+          if (draftISODate !== hoyISO) {
+            localStorage.removeItem('auditDraft')
+          }
+        }
+
+        // Limpiar moduloDraft si existe
+        const moduloDraft = localStorage.getItem('moduloDraft')
+        if (moduloDraft) {
+          const parsed = JSON.parse(moduloDraft)
+          const draftDate = parsed.fechaAuditoria || parsed.fechaVenta
+
+          if (draftDate) {
+            const [day, month, year] = draftDate.split('/')
+            const draftISODate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+
+            if (draftISODate !== hoyISO) {
+              localStorage.removeItem('moduloDraft')
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error clearing old drafts:', error)
+        localStorage.removeItem('auditDraft')
+        localStorage.removeItem('moduloDraft')
+      }
     },
 
     // Método para verificar si el usuario tiene un rol específico

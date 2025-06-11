@@ -1,3 +1,4 @@
+// src/utils/jwt.js
 export function decodeJWT(token) {
   try {
     const base64Url = token.split('.')[1]

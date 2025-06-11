@@ -1,4 +1,3 @@
-// src/views/auth/LoginView.vue
 <template>
   <div class="min-h-screen bg-white flex items-center justify-center p-4">
     <div class="w-full max-w-md">
@@ -47,17 +46,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginForm from '@/components/forms/LoginForm.vue'
-import NotificationModal from '@/components/common/NotificationModal.vue' // <-- importar
+import NotificationModal from '@/components/common/NotificationModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const errorMessage = ref('')
+const showModal = ref(false)
 
-const showModal = ref(false) // controla si se muestra el modal
+// Limpieza al montar el componente de login
+onMounted(() => {
+  authStore.clearAuthData() // Limpia solo datos de autenticación
+})
 
 const handleLogin = async (credentials) => {
   try {
@@ -67,6 +70,7 @@ const handleLogin = async (credentials) => {
   } catch (error) {
     errorMessage.value = error.response?.data?.error || error.message || 'Credenciales incorrectas'
     showModal.value = true
+    authStore.clearAuthData()
   }
 }
 </script>

@@ -4,10 +4,11 @@ import { useAuthStore } from '@/stores/auth'
 export const authGuard = (to, from, next) => {
   const auth = useAuthStore()
 
-  if (auth.isAuthenticated) {
-    next()
-  } else {
+  if (!auth.isAuthenticated) {
+    auth.clearAuthData()
     next('/login')
+  } else {
+    next()
   }
 }
 

@@ -1,3 +1,4 @@
+// src/components/common/ConfirmationModal.vue
 <template>
   <!-- Overlay del modal -->
   <div

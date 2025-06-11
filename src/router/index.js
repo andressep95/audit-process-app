@@ -26,8 +26,8 @@ const routes = [
       },
       {
         path: '/audits',
-        name: 'audits',
-        component: () => import('@/views/audits/AuditListView.vue'),
+        name: 'auditView',
+        component: () => import('@/views/audits/AuditView.vue'),
       },
       {
         path: '/checklists',
