@@ -1,13 +1,9 @@
+<!-- src/views/admin/AuditView.vue -->
 <template>
-  <div>
-    <AuditModuleForm
-      v-if="mostrarFormulario"
-      :modulo="modulo"
-      @guardado="onFormularioGuardado"
-      @cerrar="onFormularioCerrado"
-    />
-    <div v-else class="p-6 space-y-6">
-      <!-- Header del Módulo -->
+  <div class="min-h-screen bg-gray-50">
+    <!-- Contenedor para la tabla de auditorías -->
+    <div class="px-6 py-1">
+      <!-- Tabla de auditorías -->
       <div
         @click="mostrarFormulario = true"
         class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
@@ -229,9 +225,8 @@
           </div>
         </div>
       </div>
-
       <!-- Sección de Submódulos -->
-      <div class="mt-8">
+      <div class="mt-4">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
         <SubModuleCards :subModulos="modulo.subModulo" @select-submodule="abrirSubModulo" />
       </div>
@@ -245,6 +240,14 @@
         @cerrar="cerrarFormulario"
       />
     </div>
+
+    <!-- Modal del formulario de auditoría -->
+    <AuditModuleForm
+      :show="mostrarFormulario"
+      :modulo="modulo"
+      @cerrar="onFormularioCerrado"
+      @guardado="onFormularioGuardado"
+    />
   </div>
 </template>
 
@@ -253,18 +256,53 @@ import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import AuditModuleForm from '@/components/forms/AuditModuleForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
-import { useAuditStore } from '@/stores/auditStore'
+import type { Modulo, SubModulo } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
-import type { Modulo, SubModulo, Task, Observacion } from '@/models/models'
 
-const auditStore = useAuditStore()
-const mostrarFormulario = ref(true)
+const mostrarFormulario = ref(false)
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
   if (!token) return ''
   const decoded = decodeJWT(token)
   return decoded?.preferred_username ?? decoded?.name ?? ''
+}
+
+const cargarDesdeLocalStorage = () => {
+  const draft = localStorage.getItem('auditDraft')
+  const hoyISO = dayjs().format('YYYY-MM-DD')
+
+  if (draft) {
+    try {
+      const parsed = JSON.parse(draft)
+      const [day, month, year] = parsed.fechaAuditoria.split('/')
+      const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+
+      if (draftISO === hoyISO) {
+        parsed.auditor = obtenerAuditorDesdeToken()
+        modulo.value = parsed
+        mostrarFormulario.value = false
+      } else {
+        localStorage.removeItem('auditDraft')
+      }
+    } catch (e) {
+      console.error('Error al leer el borrador:', e)
+      localStorage.removeItem('auditDraft')
+    }
+  } else {
+    // Si no hay borrador, mostramos el formulario
+    mostrarFormulario.value = true
+  }
+}
+
+const onFormularioGuardado = (moduloGuardado: Modulo) => {
+  modulo.value = moduloGuardado
+  mostrarFormulario.value = false
+  localStorage.setItem('auditDraft', JSON.stringify(moduloGuardado))
+}
+
+const onFormularioCerrado = () => {
+  mostrarFormulario.value = false
 }
 
 const modulo = ref<Modulo>({
@@ -297,15 +335,15 @@ function cerrarFormulario() {
 function getFormularioComponent(id: number) {
   switch (id) {
     case 1:
-      return () => import('@/components/forms/AdminForm.vue')
+      return () => import('@/components/forms/ExistenciaForm.vue')
     case 2:
-      return () => import('@/components/forms/MantencionForm.vue')
+      return () => import('@/components/forms/AdministracionForm.vue')
     case 3:
-      return () => import('@/components/forms/VentasForm.vue')
+      return () => import('@/components/forms/MantencionForm.vue')
     case 4:
-      return () => import('@/components/forms/LogisticaForm.vue')
+      return () => import('@/components/forms/RecursosHumForm.vue')
     case 5:
-      return () => import('@/components/forms/SeguridadForm.vue')
+      return () => import('@/components/forms/RecaudacionForm.vue')
     default:
       return null
   }
@@ -318,40 +356,6 @@ function actualizarSubModulo(subModuloActualizado: SubModulo) {
   }
   cerrarFormulario()
   localStorage.setItem('auditDraft', JSON.stringify(modulo.value))
-}
-
-const cargarDesdeLocalStorage = () => {
-  const draft = localStorage.getItem('auditDraft')
-  const hoyISO = dayjs().format('YYYY-MM-DD')
-
-  if (draft) {
-    try {
-      const parsed = JSON.parse(draft)
-      const [day, month, year] = parsed.fechaAuditoria.split('/')
-      const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-
-      if (draftISO === hoyISO) {
-        parsed.auditor = obtenerAuditorDesdeToken()
-        modulo.value = parsed
-        mostrarFormulario.value = false
-      } else {
-        localStorage.removeItem('auditDraft')
-      }
-    } catch (e) {
-      console.error('Error al leer el borrador:', e)
-      localStorage.removeItem('auditDraft')
-    }
-  }
-}
-
-const onFormularioGuardado = (moduloGuardado: Modulo) => {
-  modulo.value = moduloGuardado
-  mostrarFormulario.value = false
-  localStorage.setItem('auditDraft', JSON.stringify(moduloGuardado))
-}
-
-const onFormularioCerrado = () => {
-  mostrarFormulario.value = false
 }
 
 onMounted(() => {
