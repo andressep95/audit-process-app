@@ -1,14 +1,17 @@
 // src/components/forms/AuditModuleForm.vue
 <template>
   <Transition name="modal">
-    <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto" @click.self="cerrarFormulario">
+    <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
       <div
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
         <!-- Fondo oscuro -->
         <Transition name="modal-fade">
           <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div
+              class="absolute inset-0 bg-gray-500 opacity-75"
+              @click.self="cerrarFormulario"
+            ></div>
           </div>
         </Transition>
 
@@ -175,3 +178,36 @@ const cerrarFormulario = () => {
   emit('cerrar')
 }
 </script>
+<style scoped>
+/* Transición del modal principal */
+.modal-enter-active,
+.modal-leave-active {
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.modal-enter-to,
+.modal-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Transición del fondo oscuro */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-to,
+.modal-fade-leave-from {
+  opacity: 0.75;
+}
+</style>

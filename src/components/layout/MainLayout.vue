@@ -39,15 +39,15 @@ const authStore = useAuthStore()
 
 const showAuditModal = ref(false)
 
-onMounted(() => {
-  const draft = localStorage.getItem('moduloDraft')
-  if (authStore.hasRole('ADMIN') && !draft && localStorage.getItem('auditAccepted') !== 'true') {
-    showAuditModal.value = true
-  }
-})
+const getTodayDate = () => {
+  const today = new Date()
+  return today.toISOString().split('T')[0] // Solo la parte de la fecha
+}
 
 const handleAuditConfirm = () => {
+  const today = getTodayDate()
   localStorage.setItem('auditAccepted', 'true')
+  localStorage.setItem('auditAcceptedDate', today)
   showAuditModal.value = false
   router.push('/audits')
 }
@@ -55,6 +55,20 @@ const handleAuditConfirm = () => {
 const handleAuditCancel = () => {
   showAuditModal.value = false
 }
+
+onMounted(() => {
+  const draft = localStorage.getItem('moduloDraft')
+  const storedDate = localStorage.getItem('auditAcceptedDate')
+  const today = getTodayDate()
+
+  if (authStore.hasRole('ADMIN') && !draft) {
+    if (storedDate !== today) {
+      localStorage.removeItem('auditAccepted')
+      localStorage.removeItem('auditAcceptedDate')
+      showAuditModal.value = true
+    }
+  }
+})
 </script>
 
 <style scoped>
