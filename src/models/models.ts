@@ -1,3 +1,4 @@
+// src/models/models.ts
 export interface Modulo {
   pais: string
   tienda: string
@@ -10,11 +11,13 @@ export interface Modulo {
 }
 
 export interface SubModulo {
-  nombreModulo: string
+  id: number
+  nombre: string
   tasks: Task[]
 }
 
 export interface Task {
+  id: number
   rc: string
   procedimiento: string
   riesgo: string
@@ -28,6 +31,7 @@ export interface Task {
 }
 
 export interface Observacion {
+  id: number
   observacion: string
   image: string
 }

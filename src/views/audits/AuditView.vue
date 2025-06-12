@@ -6,7 +6,7 @@
       @guardado="onFormularioGuardado"
       @cerrar="onFormularioCerrado"
     />
-    <div v-else class="p-6">
+    <div v-else class="p-6 space-y-6">
       <!-- Header del Módulo -->
       <div
         @click="mostrarFormulario = true"
@@ -229,6 +229,21 @@
           </div>
         </div>
       </div>
+
+      <!-- Sección de Submódulos -->
+      <div class="mt-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
+        <SubModuleCards :subModulos="modulo.subModulo" @select-submodule="abrirSubModulo" />
+      </div>
+
+      <!-- Formulario dinámico -->
+      <component
+        v-if="subModuloSeleccionado"
+        :is="getFormularioComponent(subModuloSeleccionado.id)"
+        :subModulo="subModuloSeleccionado"
+        @guardar="actualizarSubModulo"
+        @cerrar="cerrarFormulario"
+      />
     </div>
   </div>
 </template>
@@ -237,19 +252,18 @@
 import { ref, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import AuditModuleForm from '@/components/forms/AuditModuleForm.vue'
+import SubModuleCards from '@/components/common/SubModuleCards.vue'
 import { useAuditStore } from '@/stores/auditStore'
-import { decodeJWT } from '@/utils/jwt' // <-- Importamos decodeJWT
-import type { Modulo } from '@/models/models'
+import { decodeJWT } from '@/utils/jwt'
+import type { Modulo, SubModulo, Task, Observacion } from '@/models/models'
 
 const auditStore = useAuditStore()
 const mostrarFormulario = ref(true)
 
-// Función para obtener el auditor desde el token JWT
 function obtenerAuditorDesdeToken(): string {
-  const token = localStorage.getItem('access_token') // Cambia la key si usas otra
+  const token = localStorage.getItem('access_token')
   if (!token) return ''
   const decoded = decodeJWT(token)
-  // Suponiendo que el nombre del auditor está en "preferred_username" o "name"
   return decoded?.preferred_username ?? decoded?.name ?? ''
 }
 
@@ -257,14 +271,55 @@ const modulo = ref<Modulo>({
   pais: '',
   tienda: '',
   jefeTienda: '',
-  auditor: obtenerAuditorDesdeToken(), // <-- Aquí asignamos el nombre del auditor desde el token
+  auditor: obtenerAuditorDesdeToken(),
   fechaAuditoria: dayjs().format('DD/MM/YYYY'),
   estado: false,
   observacionesGenerales: '',
-  subModulo: [],
+  subModulo: [
+    { id: 1, nombre: 'Existencia', tasks: [] },
+    { id: 2, nombre: 'Administracion', tasks: [] },
+    { id: 3, nombre: 'TI Mantencion', tasks: [] },
+    { id: 4, nombre: 'RR.HH - SSO', tasks: [] },
+    { id: 5, nombre: 'Recaudacion', tasks: [] },
+  ],
 })
 
-// Cargar datos desde localStorage
+const subModuloSeleccionado = ref<SubModulo | null>(null)
+
+function abrirSubModulo(sub: SubModulo) {
+  subModuloSeleccionado.value = sub
+}
+
+function cerrarFormulario() {
+  subModuloSeleccionado.value = null
+}
+
+function getFormularioComponent(id: number) {
+  switch (id) {
+    case 1:
+      return () => import('@/components/forms/AdminForm.vue')
+    case 2:
+      return () => import('@/components/forms/MantencionForm.vue')
+    case 3:
+      return () => import('@/components/forms/VentasForm.vue')
+    case 4:
+      return () => import('@/components/forms/LogisticaForm.vue')
+    case 5:
+      return () => import('@/components/forms/SeguridadForm.vue')
+    default:
+      return null
+  }
+}
+
+function actualizarSubModulo(subModuloActualizado: SubModulo) {
+  const index = modulo.value.subModulo.findIndex((s) => s.id === subModuloActualizado.id)
+  if (index !== -1) {
+    modulo.value.subModulo[index] = subModuloActualizado
+  }
+  cerrarFormulario()
+  localStorage.setItem('auditDraft', JSON.stringify(modulo.value))
+}
+
 const cargarDesdeLocalStorage = () => {
   const draft = localStorage.getItem('auditDraft')
   const hoyISO = dayjs().format('YYYY-MM-DD')
@@ -276,7 +331,6 @@ const cargarDesdeLocalStorage = () => {
       const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
       if (draftISO === hoyISO) {
-        // Actualizar auditor por si cambió el token
         parsed.auditor = obtenerAuditorDesdeToken()
         modulo.value = parsed
         mostrarFormulario.value = false
