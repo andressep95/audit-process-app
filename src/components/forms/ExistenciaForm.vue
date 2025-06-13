@@ -1,6 +1,7 @@
 <template>
   <div
     class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center"
+    @click="handleClickOutside"
   >
     <div ref="modalContent" class="bg-white p-8 rounded-lg shadow-xl max-w-4xl w-full relative">
       <h3 class="text-2xl font-bold mb-4 text-gray-800">
@@ -31,7 +32,7 @@
             <div class="space-x-2">
               <button
                 type="button"
-                @click="goToPrevSubtask"
+                @click.stop="goToPrevSubtask"
                 :disabled="currentSubtaskIndex === 0"
                 class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -39,7 +40,7 @@
               </button>
               <button
                 type="button"
-                @click="goToNextSubtask"
+                @click.stop="goToNextSubtask"
                 :disabled="currentSubtaskIndex === currentTask.subtasks.length - 1"
                 class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -109,7 +110,7 @@
                 ></textarea>
                 <button
                   type="button"
-                  @click="removeObservation(currentSubtask, obsIndex)"
+                  @click.stop="removeObservation(currentSubtask, obsIndex)"
                   class="text-red-600 hover:text-red-800 text-sm mt-1"
                 >
                   Eliminar Observación
@@ -117,7 +118,7 @@
               </div>
               <button
                 type="button"
-                @click="addObservation(currentSubtask)"
+                @click.stop="addObservation(currentSubtask)"
                 class="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
               >
                 <svg
@@ -145,7 +146,7 @@
         <div class="mt-6 flex justify-between gap-3">
           <button
             type="button"
-            @click="prevTask"
+            @click.stop="prevTask"
             :disabled="currentTaskIndex === 0"
             class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -155,7 +156,7 @@
           <div class="flex gap-3">
             <button
               type="button"
-              @click="cerrar"
+              @click.stop="cerrarModalYGuardar"
               class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
             >
               Cancelar
@@ -164,7 +165,7 @@
             <button
               type="button"
               v-if="currentTaskIndex < currentSubModulo.tasks.length - 1"
-              @click="nextTask"
+              @click.stop="nextTask"
               class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               Siguiente Tarea
@@ -221,13 +222,56 @@ const currentSubtask = computed<AuditSubTask | undefined>(() => {
 
 const modalContent = ref<HTMLElement | null>(null)
 
+// --- Nuevas funciones para guardado en LocalStorage y manejo de cierre ---
+
+const LOCAL_STORAGE_KEY = `auditModule_${props.subModulo.id}` // Clave única para cada módulo
+
+const saveToLocalStorage = (data: AuditModules) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(toRaw(data)))
+    console.log('Datos guardados en localStorage:', LOCAL_STORAGE_KEY)
+  } catch (e) {
+    console.error('Error al guardar en localStorage:', e)
+  }
+}
+
+const loadFromLocalStorage = (): AuditModules | null => {
+  try {
+    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY)
+    if (storedData) {
+      const parsedData: AuditModules = JSON.parse(storedData)
+      // Asegurarse de que el modulo cargado es el correcto por el ID, y que las tareas/subtareas existen
+      if (parsedData.id === props.subModulo.id && parsedData.tasks.length > 0) {
+        return parsedData
+      }
+    }
+  } catch (e) {
+    console.error('Error al cargar de localStorage:', e)
+    localStorage.removeItem(LOCAL_STORAGE_KEY) // Limpiar datos corruptos
+  }
+  return null
+}
+
+const handleClickOutside = (event: MouseEvent) => {
+  // Cierra el modal si el clic NO fue dentro del contenido del modal
+  if (modalContent.value && !modalContent.value.contains(event.target as Node)) {
+    cerrarModalYGuardar()
+  }
+}
+
+const cerrarModalYGuardar = () => {
+  saveToLocalStorage(currentSubModulo.value) // Guarda antes de cerrar
+  emit('cerrar') // Emite el evento de cierre
+}
+
+// --- Fin de nuevas funciones ---
+
 const scrollToTop = () => {
   if (modalContent.value) {
     modalContent.value.scrollTo({ top: 0, behavior: 'smooth' })
   }
 }
 
-// FUNCIONES PARA NAVEGACIÓN DENTRO DE LAS SUBTAREAS DE UNA TAREA (botones superiores)
 const goToNextSubtask = () => {
   if (currentTask.value && currentSubtaskIndex.value < currentTask.value.subtasks.length - 1) {
     currentSubtaskIndex.value++
@@ -246,11 +290,10 @@ const goToPrevSubtask = () => {
   }
 }
 
-// FUNCIONES PARA NAVEGACIÓN ENTRE TAREAS COMPLETAS (botones inferiores)
 const nextTask = () => {
   if (currentTaskIndex.value < currentSubModulo.value.tasks.length - 1) {
     currentTaskIndex.value++
-    currentSubtaskIndex.value = 0 // Siempre reinicia a la primera subtarea de la nueva tarea
+    currentSubtaskIndex.value = 0
     nextTick(() => {
       scrollToTop()
     })
@@ -260,9 +303,6 @@ const nextTask = () => {
 const prevTask = () => {
   if (currentTaskIndex.value > 0) {
     currentTaskIndex.value--
-    // Al retroceder una tarea, vamos a la primera subtarea de esa tarea.
-    // Podrías cambiar esto para ir a la última subtarea si así lo prefieres,
-    // pero ir a la primera es más común en "wizards".
     currentSubtaskIndex.value = 0
     nextTick(() => {
       scrollToTop()
@@ -502,14 +542,38 @@ const initializeTasksForExistencia = () => {
   }
 }
 
+// Watch principal que ahora también guarda en localStorage
+watch(
+  currentSubModulo,
+  (newVal) => {
+    calculateCompliance()
+    saveToLocalStorage(newVal) // Guarda automáticamente con cada cambio
+  },
+  { deep: true },
+)
+
+// Watch para cargar datos al inicializar el componente, pero solo si el subModulo de props no tiene tareas.
+// Esto permite cargar el estado guardado si el modal se abrió previamente.
 watch(
   () => props.subModulo,
   (newVal) => {
     if (newVal) {
-      currentSubModulo.value = deepCopyAuditModule(toRaw(newVal))
-      initializeTasksForExistencia()
-      currentTaskIndex.value = 0
-      currentSubtaskIndex.value = 0
+      const loadedData = loadFromLocalStorage()
+      if (loadedData) {
+        currentSubModulo.value = loadedData
+        // Intentar restaurar la posición si es relevante, o resetearla.
+        // Aquí se resetea por simplicidad, pero podrías guardar y restaurar los índices si lo necesitas.
+        currentTaskIndex.value = 0
+        currentSubtaskIndex.value = 0
+        console.log('Datos cargados de localStorage:', loadedData)
+      } else {
+        // Si no hay datos guardados o no son válidos, inicializa con los datos de props
+        currentSubModulo.value = deepCopyAuditModule(toRaw(newVal))
+        initializeTasksForExistencia()
+        currentTaskIndex.value = 0
+        currentSubtaskIndex.value = 0
+        console.log('Inicializando con datos por defecto o de props.')
+      }
       nextTick(() => {
         scrollToTop()
       })
@@ -613,20 +677,16 @@ const calculateCompliance = () => {
     completedTasksCount === currentSubModulo.value.tasks.length
 }
 
-watch(
-  currentSubModulo,
-  () => {
-    calculateCompliance()
-  },
-  { deep: true },
-)
-
 const guardarModulo = () => {
   calculateCompliance()
+  saveToLocalStorage(currentSubModulo.value) // Asegura el guardado final
   emit('guardar', currentSubModulo.value)
 }
 
 const cerrar = () => {
+  // Esta función original ya no se usa directamente para cerrar,
+  // sino a través de cerrarModalYGuardar para asegurar el guardado.
+  // Podría eliminarse si no se usa en ningún otro lado.
   emit('cerrar')
 }
 </script>
