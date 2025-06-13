@@ -2,10 +2,13 @@
   <div
     class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center"
   >
-    <div class="bg-white p-8 rounded-lg shadow-xl max-w-4xl w-full relative">
+    <div ref="modalContent" class="bg-white p-8 rounded-lg shadow-xl max-w-4xl w-full relative">
       <h3 class="text-2xl font-bold mb-4 text-gray-800">
         Módulo: {{ currentSubModulo.moduleName }}
       </h3>
+      <p class="text-gray-600 mb-6">
+        Por favor, complete las muestras auditadas y los errores encontrados para cada subtarea.
+      </p>
 
       <form @submit.prevent="guardarModulo" class="space-y-6">
         <div
@@ -14,31 +17,61 @@
           class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm"
         >
           <h4 class="text-xl font-semibold mb-3 text-gray-700">
-            {{ currentTask.taskCode }}. {{ currentTask.procedureDescription }}
+            Tarea: {{ currentTask.taskCode }}. {{ currentTask.procedureDescription }}
           </h4>
 
           <div
-            v-for="subtask in currentTask.subtasks"
-            :key="subtask.id"
+            v-if="currentTask.subtasks.length > 0"
+            class="flex justify-between items-center mb-4"
+          >
+            <h5 class="text-lg font-medium text-gray-700">
+              Subtarea {{ currentSubtaskIndex + 1 }} de {{ currentTask.subtasks.length }} (Req.
+              {{ currentSubtask?.requerimentCode }})
+            </h5>
+            <div class="space-x-2">
+              <button
+                type="button"
+                @click="goToPrevSubtask"
+                :disabled="currentSubtaskIndex === 0"
+                class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                &lt;
+              </button>
+              <button
+                type="button"
+                @click="goToNextSubtask"
+                :disabled="currentSubtaskIndex === currentTask.subtasks.length - 1"
+                class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                &gt;
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="currentSubtask"
+            :key="currentSubtask.id"
             class="mb-4 bg-gray-50 p-4 rounded-md border border-gray-100"
           >
             <p class="text-base text-gray-700 font-medium mb-2">
-              {{ currentTask.taskCode }}.{{ subtask.requerimentCode }}
-              {{ subtask.procedureDescription }}
+              {{ currentTask.taskCode }}.{{ currentSubtask.requerimentCode }}
+              {{ currentSubtask.procedureDescription }}
             </p>
-            <p class="text-sm text-gray-500 mb-3">Nivel de Riesgo: {{ subtask.riskLevel }}</p>
+            <p class="text-sm text-gray-500 mb-3">
+              Nivel de Riesgo: {{ currentSubtask.riskLevel }}
+            </p>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
               <div>
                 <label
-                  :for="`auditedSamples-${subtask.id}`"
+                  :for="`auditedSamples-${currentSubtask.id}`"
                   class="block text-sm font-medium text-gray-700"
                   >Muestras Auditadas</label
                 >
                 <input
-                  :id="`auditedSamples-${subtask.id}`"
+                  :id="`auditedSamples-${currentSubtask.id}`"
                   type="number"
-                  v-model.number="subtask.auditedSamples"
+                  v-model.number="currentSubtask.auditedSamples"
                   min="0"
                   required
                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -46,14 +79,14 @@
               </div>
               <div>
                 <label
-                  :for="`errorsFound-${subtask.id}`"
+                  :for="`errorsFound-${currentSubtask.id}`"
                   class="block text-sm font-medium text-gray-700"
                   >Errores Encontrados</label
                 >
                 <input
-                  :id="`errorsFound-${subtask.id}`"
+                  :id="`errorsFound-${currentSubtask.id}`"
                   type="number"
-                  v-model.number="subtask.errorsFound"
+                  v-model.number="currentSubtask.errorsFound"
                   min="0"
                   required
                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
@@ -63,7 +96,11 @@
 
             <div class="mt-4">
               <h5 class="text-base font-medium text-gray-700 mb-2">Observaciones:</h5>
-              <div v-for="(obs, obsIndex) in subtask.observations" :key="obs.id" class="mb-2">
+              <div
+                v-for="(obs, obsIndex) in currentSubtask.observations"
+                :key="obs.id"
+                class="mb-2"
+              >
                 <textarea
                   v-model="obs.observationText"
                   rows="2"
@@ -72,7 +109,7 @@
                 ></textarea>
                 <button
                   type="button"
-                  @click="removeObservation(subtask, obsIndex)"
+                  @click="removeObservation(currentSubtask, obsIndex)"
                   class="text-red-600 hover:text-red-800 text-sm mt-1"
                 >
                   Eliminar Observación
@@ -80,7 +117,7 @@
               </div>
               <button
                 type="button"
-                @click="addObservation(subtask)"
+                @click="addObservation(currentSubtask)"
                 class="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
               >
                 <svg
@@ -101,7 +138,9 @@
               </button>
             </div>
           </div>
+          <p v-else class="text-center text-gray-500">No hay subtareas para esta tarea.</p>
         </div>
+        <p v-else class="text-center text-gray-500">Cargando tareas...</p>
 
         <div class="mt-6 flex justify-between gap-3">
           <button
@@ -110,7 +149,7 @@
             :disabled="currentTaskIndex === 0"
             class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Anterior
+            Anterior Tarea
           </button>
 
           <div class="flex gap-3">
@@ -128,7 +167,7 @@
               @click="nextTask"
               class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Siguiente
+              Siguiente Tarea
             </button>
             <button
               type="submit"
@@ -145,16 +184,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, toRaw } from 'vue'
+import { ref, watch, computed, toRaw, nextTick } from 'vue'
 import type { AuditModules, Task, AuditSubTask, AuditObservations } from '@/models/models'
 
 const props = defineProps<{
   subModulo: AuditModules
 }>()
 
-const emit = defineEmits(['guardar', 'cerrar'])
+const emit = defineEmits<{
+  (e: 'guardar', payload: AuditModules): void
+  (e: 'cerrar'): void
+}>()
 
-// Initialize with a default structure or a shallow copy, as it will be deep-copied in the watch
 const currentSubModulo = ref<AuditModules>({
   id: 0,
   moduleName: '',
@@ -164,39 +205,81 @@ const currentSubModulo = ref<AuditModules>({
   tasks: [],
 })
 
-// Variable para controlar el índice de la tarea actual
 const currentTaskIndex = ref(0)
+const currentSubtaskIndex = ref(0)
 
-// Computed property para obtener la tarea actual
 const currentTask = computed<Task | undefined>(() => {
   return currentSubModulo.value.tasks[currentTaskIndex.value]
 })
 
-// Función para ir a la siguiente tarea
+const currentSubtask = computed<AuditSubTask | undefined>(() => {
+  if (currentTask.value && currentTask.value.subtasks.length > currentSubtaskIndex.value) {
+    return currentTask.value.subtasks[currentSubtaskIndex.value]
+  }
+  return undefined
+})
+
+const modalContent = ref<HTMLElement | null>(null)
+
+const scrollToTop = () => {
+  if (modalContent.value) {
+    modalContent.value.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+// FUNCIONES PARA NAVEGACIÓN DENTRO DE LAS SUBTAREAS DE UNA TAREA (botones superiores)
+const goToNextSubtask = () => {
+  if (currentTask.value && currentSubtaskIndex.value < currentTask.value.subtasks.length - 1) {
+    currentSubtaskIndex.value++
+    nextTick(() => {
+      scrollToTop()
+    })
+  }
+}
+
+const goToPrevSubtask = () => {
+  if (currentSubtaskIndex.value > 0) {
+    currentSubtaskIndex.value--
+    nextTick(() => {
+      scrollToTop()
+    })
+  }
+}
+
+// FUNCIONES PARA NAVEGACIÓN ENTRE TAREAS COMPLETAS (botones inferiores)
 const nextTask = () => {
   if (currentTaskIndex.value < currentSubModulo.value.tasks.length - 1) {
     currentTaskIndex.value++
+    currentSubtaskIndex.value = 0 // Siempre reinicia a la primera subtarea de la nueva tarea
+    nextTick(() => {
+      scrollToTop()
+    })
   }
 }
 
-// Función para ir a la tarea anterior
 const prevTask = () => {
   if (currentTaskIndex.value > 0) {
     currentTaskIndex.value--
+    // Al retroceder una tarea, vamos a la primera subtarea de esa tarea.
+    // Podrías cambiar esto para ir a la última subtarea si así lo prefieres,
+    // pero ir a la primera es más común en "wizards".
+    currentSubtaskIndex.value = 0
+    nextTick(() => {
+      scrollToTop()
+    })
   }
 }
 
-// Function to perform a deep copy of the AuditModules object
 const deepCopyAuditModule = (sourceModule: AuditModules): AuditModules => {
   const copiedModule: AuditModules = {
-    ...sourceModule, // Shallow copy top-level properties
+    ...sourceModule,
     tasks: sourceModule.tasks.map((task) => {
       const copiedTask: Task = {
-        ...task, // Shallow copy task properties
+        ...task,
         subtasks: task.subtasks.map((subtask) => {
           const copiedSubtask: AuditSubTask = {
-            ...subtask, // Shallow copy subtask properties
-            observations: subtask.observations.map((obs) => ({ ...obs })), // Deep copy observations
+            ...subtask,
+            observations: subtask.observations.map((obs) => ({ ...obs })),
           }
           return copiedSubtask
         }),
@@ -207,14 +290,11 @@ const deepCopyAuditModule = (sourceModule: AuditModules): AuditModules => {
   return copiedModule
 }
 
-// Lógica para inicializar las tareas y subtareas para el módulo de Existencia
 const initializeTasksForExistencia = () => {
-  // Solo inicializa si las tareas aún no han sido cargadas o generadas
-  // o si el módulo inicial recibido tiene tareas vacías
   if (currentSubModulo.value.tasks.length === 0 || props.subModulo.tasks.length === 0) {
     const initialTasks: Task[] = [
       {
-        id: 1, // ID único para la tarea
+        id: 1,
         taskCode: 'A',
         procedureDescription: 'Realizar inventario Selectivo a una muestra de Sku',
         compliancePorcentage: 0,
@@ -222,11 +302,11 @@ const initializeTasksForExistencia = () => {
         isCompleted: false,
         subtasks: [
           {
-            id: 1, // ID único para la subtarea
+            id: 1,
             requerimentCode: 1,
             procedureDescription:
               'Tomar una muestra sobre la línea que presento mayor diferencia en Inventario General, verificar si están cuadrados los sku´s, evaluar según escala determinada (perdida sobre % que representa el costo de la venta, no debería sobrepasar 1%)',
-            riskLevel: 'Medio', // Puedes asignar valores concretos aquí
+            riskLevel: 'Medio',
             auditedSamples: 0,
             errorsFound: 0,
             errorPercentage: 0,
@@ -298,7 +378,7 @@ const initializeTasksForExistencia = () => {
         ],
       },
       {
-        id: 3, // ID único para la tarea
+        id: 3,
         taskCode: 'C',
         procedureDescription: 'Revision en el monitor WEB de Existencias',
         compliancePorcentage: 0,
@@ -306,7 +386,7 @@ const initializeTasksForExistencia = () => {
         isCompleted: false,
         subtasks: [
           {
-            id: 1, // ID único para la subtarea
+            id: 1,
             requerimentCode: 1,
             procedureDescription:
               'Recepción de Camión: Se debe revisar que no existan entregas abiertas y todas deben estar contabilizadas con su respectivo documento SAP de contabilización',
@@ -360,7 +440,7 @@ const initializeTasksForExistencia = () => {
         ],
       },
       {
-        id: 4, // ID único para la tarea
+        id: 4,
         taskCode: 'D',
         procedureDescription: 'Productos para la venta',
         compliancePorcentage: 0,
@@ -368,7 +448,7 @@ const initializeTasksForExistencia = () => {
         isCompleted: false,
         subtasks: [
           {
-            id: 1, // ID único para la subtarea
+            id: 1,
             requerimentCode: 1,
             procedureDescription: 'Existen productos de venta en uso en el Back office/ trastienda',
             riskLevel: 'Alto',
@@ -395,7 +475,7 @@ const initializeTasksForExistencia = () => {
         ],
       },
       {
-        id: 5, // ID único para la tarea
+        id: 5,
         taskCode: 'E',
         procedureDescription: 'Seguimiento Visita Anterior',
         compliancePorcentage: 0,
@@ -403,7 +483,7 @@ const initializeTasksForExistencia = () => {
         isCompleted: false,
         subtasks: [
           {
-            id: 1, // ID único para la subtarea
+            id: 1,
             requerimentCode: 1,
             procedureDescription:
               'Cuando aplique, valide si se repiten las mismas observaciones que la auditoría anterior',
@@ -422,35 +502,34 @@ const initializeTasksForExistencia = () => {
   }
 }
 
-// Observa cambios en `props.subModulo`. Cuando el componente se carga o el prop cambia,
-// actualiza la copia interna y inicializa las tareas si es necesario.
 watch(
   () => props.subModulo,
   (newVal) => {
     if (newVal) {
       currentSubModulo.value = deepCopyAuditModule(toRaw(newVal))
       initializeTasksForExistencia()
-      currentTaskIndex.value = 0 // Reinicia el índice de la tarea al cargar un nuevo submódulo
+      currentTaskIndex.value = 0
+      currentSubtaskIndex.value = 0
+      nextTick(() => {
+        scrollToTop()
+      })
     }
   },
   { immediate: true, deep: true },
 )
 
-// Función para agregar una observación a una subtarea específica
 const addObservation = (subtask: AuditSubTask) => {
   subtask.observations.push({
-    id: Date.now(), // Usar un ID temporal para el cliente. En el backend, se generaría uno real.
+    id: Date.now(),
     observationText: '',
-    imageUrl: '', // Puedes dejar esto vacío o pedir un URL al usuario
+    imageUrl: '',
   })
 }
 
-// Función para eliminar una observación
 const removeObservation = (subtask: AuditSubTask, index: number) => {
   subtask.observations.splice(index, 1)
 }
 
-// Lógica para calcular porcentajes y calificaciones antes de guardar
 const calculateCompliance = () => {
   currentSubModulo.value.tasks.forEach((task) => {
     let totalSamples = 0
@@ -458,7 +537,6 @@ const calculateCompliance = () => {
     let completedSubtasks = 0
 
     task.subtasks.forEach((subtask) => {
-      // Validación básica
       if (subtask.auditedSamples < 0) subtask.auditedSamples = 0
       if (subtask.errorsFound < 0) subtask.errorsFound = 0
       if (subtask.errorsFound > subtask.auditedSamples) subtask.errorsFound = subtask.auditedSamples
@@ -468,10 +546,9 @@ const calculateCompliance = () => {
         subtask.compliancePercentage = 100 - subtask.errorPercentage
       } else {
         subtask.errorPercentage = 0
-        subtask.compliancePercentage = 100 // Si no hay muestras, se considera 100% compliant por defecto o según tu regla
+        subtask.compliancePercentage = 100
       }
 
-      // Una subtarea se considera completada si se han registrado muestras (o errores)
       if (
         subtask.auditedSamples > 0 ||
         subtask.errorsFound > 0 ||
@@ -487,14 +564,12 @@ const calculateCompliance = () => {
       totalErrors += subtask.errorsFound
     })
 
-    // Calcular cumplimiento de la tarea global
     if (totalSamples > 0) {
       task.compliancePorcentage = 100 - (totalErrors / totalSamples) * 100
     } else {
-      task.compliancePorcentage = 100 // Si no hay muestras en ninguna subtarea, se considera 100% compliant
+      task.compliancePorcentage = 100
     }
 
-    // Determinar la calificación textual de la tarea
     if (task.compliancePorcentage >= 90) {
       task.taskRating = 'Excelente'
     } else if (task.compliancePorcentage >= 70) {
@@ -504,11 +579,9 @@ const calculateCompliance = () => {
     } else {
       task.taskRating = 'Deficiente'
     }
-    // Una tarea se considera completada si todas sus subtareas lo están
     task.isCompleted = task.subtasks.length > 0 && completedSubtasks === task.subtasks.length
   })
 
-  // Calcular el cumplimiento general del módulo
   let totalModuleCompliance = 0
   let completedTasksCount = 0
 
@@ -522,10 +595,9 @@ const calculateCompliance = () => {
     currentSubModulo.value.compliancePercentage =
       totalModuleCompliance / currentSubModulo.value.tasks.length
   } else {
-    currentSubModulo.value.compliancePercentage = 0 // O 100 si no hay tareas
+    currentSubModulo.value.compliancePercentage = 0
   }
 
-  // Determinar la calificación general del módulo
   if (currentSubModulo.value.compliancePercentage >= 90) {
     currentSubModulo.value.overallRating = 'Sobresaliente'
   } else if (currentSubModulo.value.compliancePercentage >= 70) {
@@ -536,25 +608,21 @@ const calculateCompliance = () => {
     currentSubModulo.value.overallRating = 'Crítico'
   }
 
-  // Marcar el módulo como completado si todas sus tareas lo están
-  // Y si tiene al menos una tarea
   currentSubModulo.value.isCompleted =
     currentSubModulo.value.tasks.length > 0 &&
     completedTasksCount === currentSubModulo.value.tasks.length
 }
 
-// Watcher para recalcular el cumplimiento cada vez que cambian las muestras o errores
 watch(
   currentSubModulo,
   () => {
     calculateCompliance()
   },
-  { deep: true }, // Observa cambios profundos dentro del objeto currentSubModulo
+  { deep: true },
 )
 
-// Función para guardar el módulo y emitirlo al componente padre
 const guardarModulo = () => {
-  calculateCompliance() // Asegúrate de calcular antes de guardar por si acaso
+  calculateCompliance()
   emit('guardar', currentSubModulo.value)
 }
 
