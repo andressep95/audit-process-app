@@ -29,7 +29,7 @@
                   </svg>
                 </div>
                 <h2 class="text-2xl font-bold tracking-tight text-gray-800">
-                  {{ modulo.tienda || 'Proceso de Auditoria' }}
+                  {{ auditHeaders.storeName || 'Proceso de Auditoria' }}
                 </h2>
                 <span
                   class="px-2 py-1 border border-gray-200 text-gray-600 bg-white shadow-sm rounded text-sm"
@@ -54,17 +54,17 @@
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  {{ modulo.estado ? 'Completa' : 'Incompleta' }}
+                  {{ auditHeaders.isCompleted ? 'Completado' : 'Incompleto' }}
                 </span>
               </div>
               <p class="text-gray-500 text-base">
-                Auditoría en curso • {{ modulo.fechaAuditoria }}
+                Auditoría en curso • {{ auditHeaders.auditDate }}
               </p>
             </div>
             <div class="flex items-center gap-2">
               <div class="flex items-center gap-2 text-gray-800">
                 <svg
-                  v-if="modulo.estado"
+                  v-if="auditHeaders.isCompleted"
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-5 w-5 text-green-500"
                   fill="none"
@@ -94,7 +94,7 @@
                   />
                 </svg>
                 <span class="font-semibold">{{
-                  modulo.estado ? 'Completada' : 'En progreso'
+                  auditHeaders.isCompleted ? 'Completada' : 'En progreso'
                 }}</span>
               </div>
             </div>
@@ -122,7 +122,7 @@
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide">País</p>
                 <p class="font-medium text-gray-800">
-                  {{ modulo.pais || 'No especificado' }}
+                  {{ auditHeaders.country || 'No especificado' }}
                 </p>
               </div>
             </div>
@@ -146,7 +146,7 @@
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide">Jefe de Tienda</p>
                 <p class="font-medium text-gray-800">
-                  {{ modulo.jefeTienda || 'No especificado' }}
+                  {{ auditHeaders.storeManager || 'No especificado' }}
                 </p>
               </div>
             </div>
@@ -169,7 +169,9 @@
               </div>
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide">Auditor</p>
-                <p class="font-medium text-gray-800">{{ modulo.auditor || 'No especificado' }}</p>
+                <p class="font-medium text-gray-800">
+                  {{ auditHeaders.auditorName || 'No especificado' }}
+                </p>
               </div>
             </div>
             <div class="flex items-center gap-3">
@@ -191,7 +193,7 @@
               </div>
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide">Fecha</p>
-                <p class="font-medium text-gray-800">{{ modulo.fechaAuditoria }}</p>
+                <p class="font-medium text-gray-800">{{ auditHeaders.auditDate }}</p>
               </div>
             </div>
           </div>
@@ -218,7 +220,7 @@
               <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Observaciones</p>
                 <p class="font-medium text-gray-800">
-                  {{ modulo.observacionesGenerales || 'No hay observaciones registradas' }}
+                  {{ auditHeaders.observations || 'No hay observaciones registradas' }}
                 </p>
               </div>
             </div>
@@ -228,7 +230,10 @@
       <!-- Sección de Submódulos -->
       <div class="mt-4">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
-        <SubModuleCards :subModulos="modulo.subModulo" @select-submodule="abrirSubModulo" />
+        <SubModuleCards
+          :auditModules="auditHeaders.auditModules"
+          @select-submodule="abrirSubModulo"
+        />
       </div>
 
       <!-- Formulario dinámico -->
@@ -242,9 +247,9 @@
     </div>
 
     <!-- Modal del formulario de auditoría -->
-    <AuditModuleForm
+    <AuditHeaderForm
       :show="mostrarFormulario"
-      :modulo="modulo"
+      :auditHeaders="auditHeaders"
       @cerrar="onFormularioCerrado"
       @guardado="onFormularioGuardado"
     />
@@ -252,20 +257,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent, toRaw } from 'vue'
 import dayjs from 'dayjs'
-import AuditModuleForm from '@/components/forms/AuditModuleForm.vue'
+import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
-import type { Modulo, SubModulo } from '@/models/models'
+import type { AuditHeaders, AuditModules } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
 
 const mostrarFormulario = ref(false)
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
-  if (!token) return ''
-  const decoded = decodeJWT(token)
-  return decoded?.preferred_username ?? decoded?.name ?? ''
+  if (!token) {
+    console.warn('Token no encontrado en localStorage')
+    return 'Auditor Desconocido'
+  }
+
+  try {
+    const decoded = decodeJWT(token)
+    return decoded?.preferred_username ?? decoded?.name ?? 'Auditor Desconocido'
+  } catch (error) {
+    console.error('Error al decodificar token:', error)
+    return 'Auditor Desconocido'
+  }
 }
 
 const cargarDesdeLocalStorage = () => {
@@ -275,14 +289,19 @@ const cargarDesdeLocalStorage = () => {
   if (draft) {
     try {
       const parsed = JSON.parse(draft)
+      if (!parsed.fechaAuditoria) throw new Error('Fecha de auditoría ausente')
+
       const [day, month, year] = parsed.fechaAuditoria.split('/')
+      if (!day || !month || !year) throw new Error('Formato de fecha inválido')
+
       const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
       if (draftISO === hoyISO) {
-        parsed.auditor = obtenerAuditorDesdeToken()
-        modulo.value = parsed
+        parsed.auditorName = obtenerAuditorDesdeToken()
+        auditHeaders.value = parsed
         mostrarFormulario.value = false
       } else {
+        console.info('Draft con fecha vieja, se elimina')
         localStorage.removeItem('auditDraft')
       }
     } catch (e) {
@@ -290,13 +309,15 @@ const cargarDesdeLocalStorage = () => {
       localStorage.removeItem('auditDraft')
     }
   } else {
-    // Si no hay borrador, mostramos el formulario
     mostrarFormulario.value = true
   }
 }
 
-const onFormularioGuardado = (moduloGuardado: Modulo) => {
-  modulo.value = moduloGuardado
+const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
+  if (!moduloGuardado.auditDate) {
+    moduloGuardado.auditDate = dayjs().format('DD/MM/YYYY')
+  }
+  auditHeaders.value = moduloGuardado
   mostrarFormulario.value = false
   localStorage.setItem('auditDraft', JSON.stringify(moduloGuardado))
 }
@@ -305,27 +326,62 @@ const onFormularioCerrado = () => {
   mostrarFormulario.value = false
 }
 
-const modulo = ref<Modulo>({
-  pais: '',
-  tienda: '',
-  jefeTienda: '',
-  auditor: obtenerAuditorDesdeToken(),
-  fechaAuditoria: dayjs().format('DD/MM/YYYY'),
-  estado: false,
-  observacionesGenerales: '',
-  subModulo: [
-    { id: 1, nombre: 'Existencia', tasks: [] },
-    { id: 2, nombre: 'Administracion', tasks: [] },
-    { id: 3, nombre: 'TI Mantencion', tasks: [] },
-    { id: 4, nombre: 'RR.HH - SSO', tasks: [] },
-    { id: 5, nombre: 'Recaudacion', tasks: [] },
+const auditHeaders = ref<AuditHeaders>({
+  country: '',
+  storeName: '',
+  storeManager: '',
+  auditorName: obtenerAuditorDesdeToken(),
+  auditDate: dayjs().format('DD/MM/YYYY'),
+  isCompleted: false,
+  observations: '',
+  auditModules: [
+    {
+      id: 1,
+      moduleName: 'Existencia',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: [],
+    },
+    {
+      id: 2,
+      moduleName: 'Administracion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: [],
+    },
+    {
+      id: 3,
+      moduleName: 'TI Mantencion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: [],
+    },
+    {
+      id: 4,
+      moduleName: 'RR.HH - SSO',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: [],
+    },
+    {
+      id: 5,
+      moduleName: 'Recaudacion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: [],
+    },
   ],
 })
 
-const subModuloSeleccionado = ref<SubModulo | null>(null)
+const subModuloSeleccionado = ref<AuditModules | null>(null)
 
-function abrirSubModulo(sub: SubModulo) {
-  subModuloSeleccionado.value = sub
+function abrirSubModulo(sub: AuditModules) {
+  subModuloSeleccionado.value = { ...sub }
 }
 
 function cerrarFormulario() {
@@ -335,27 +391,29 @@ function cerrarFormulario() {
 function getFormularioComponent(id: number) {
   switch (id) {
     case 1:
-      return () => import('@/components/forms/ExistenciaForm.vue')
+      return defineAsyncComponent(() => import('@/components/forms/ExistenciaForm.vue'))
     case 2:
-      return () => import('@/components/forms/AdministracionForm.vue')
+      return defineAsyncComponent(() => import('@/components/forms/AdministracionForm.vue'))
     case 3:
-      return () => import('@/components/forms/MantencionForm.vue')
+      return defineAsyncComponent(() => import('@/components/forms/MantencionForm.vue'))
     case 4:
-      return () => import('@/components/forms/RecursosHumForm.vue')
+      return defineAsyncComponent(() => import('@/components/forms/RecursosHumForm.vue'))
     case 5:
-      return () => import('@/components/forms/RecaudacionForm.vue')
+      return defineAsyncComponent(() => import('@/components/forms/RecaudacionForm.vue'))
     default:
       return null
   }
 }
 
-function actualizarSubModulo(subModuloActualizado: SubModulo) {
-  const index = modulo.value.subModulo.findIndex((s) => s.id === subModuloActualizado.id)
+function actualizarSubModulo(subModuloActualizado: AuditModules) {
+  const index = auditHeaders.value.auditModules.findIndex((s) => s.id === subModuloActualizado.id)
   if (index !== -1) {
-    modulo.value.subModulo[index] = subModuloActualizado
+    // Reemplaza el módulo existente con el módulo actualizado
+    auditHeaders.value.auditModules[index] = subModuloActualizado
   }
   cerrarFormulario()
-  localStorage.setItem('auditDraft', JSON.stringify(modulo.value))
+  // Guarda todo el objeto auditHeaders después de actualizar un submódulo
+  localStorage.setItem('auditDraft', JSON.stringify(auditHeaders.value))
 }
 
 onMounted(() => {

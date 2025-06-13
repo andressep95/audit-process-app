@@ -1,37 +1,49 @@
 // src/models/models.ts
-export interface Modulo {
-  pais: string
-  tienda: string
-  jefeTienda: string
-  auditor: string
-  fechaAuditoria: string
-  estado: boolean
-  observacionesGenerales: string
-  subModulo: SubModulo[]
+export interface AuditHeaders {
+  country: string // pais
+  storeName: string // nombre de tienda
+  storeManager: string // nombre de jefe de tienda
+  auditorName: string // nombre del auditor
+  auditDate: string // fecha de auditoria
+  isCompleted: boolean // estado actual de auditoria
+  observations: string // observaciones generales de la auditoria
+  auditModules: AuditModules[]
 }
 
-export interface SubModulo {
+export interface AuditModules {
   id: number
-  nombre: string
+  moduleName: string // nombre del modulo a auditar: existencias, rrhh, mantencion, etc.
+  compliancePercentage: number // porcentaje de cumplimiento del modulo (se calcula al concluirlo)
+  overallRating: string // Calificacion textual
+  isCompleted: boolean
   tasks: Task[]
 }
 
 export interface Task {
   id: number
-  rc: string
-  procedimiento: string
-  riesgo: string
-  muestra: number
-  errores: number
-  errorPorcentual: string
-  cumplimientoPorcentual: string
-  calificacion: string
-  estado: boolean
-  observaciones: Observacion[]
+  taskCode: string // Letra de la tarea a evaluar
+  procedureDescription: string // Titulo de la tarea a evaluar
+  compliancePorcentage: number // Cumplimiento de la tarea global
+  taskRating: string // Calificacion textual dada al cumplimiento de la tarea global
+  isCompleted: boolean // Estado actual de la tarea (pendiente o no)
+  subtasks: AuditSubTask[]
 }
 
-export interface Observacion {
+export interface AuditSubTask {
   id: number
-  observacion: string
-  image: string
+  requerimentCode: number // Numero de sub-tarea
+  procedureDescription: string // Descripcion de la sub-tarea
+  riskLevel: string // Riesgo resultante de la culminacion de la tarea
+  auditedSamples: number // Numero de muestras evaluadas en la tarea
+  errorsFound: number // Errores encontrados en las muestras
+  errorPercentage: number // Porcentaje de error calculado
+  compliancePercentage: number // Porcentaje de cumplimiento acorde al de errores
+  isCompleted: boolean // Estado de la tarea realizada
+  observations: AuditObservations[]
+}
+
+export interface AuditObservations {
+  id: number
+  observationText: string // Observaciones encontradas en la tarea
+  imageUrl: string // Ruta de accesibilidad a la imagen tomada para la observacion
 }

@@ -30,12 +30,12 @@
                       <label for="pais" class="block text-sm font-medium text-gray-700">País</label>
                       <select
                         id="pais"
-                        v-model="modulo.pais"
+                        v-model="auditHeaders.country"
                         required
                         class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                       >
                         <option value="" disabled>Seleccionar país...</option>
-                        <option v-for="t in paises" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in countries" :key="t" :value="t">{{ t }}</option>
                       </select>
                     </div>
 
@@ -45,12 +45,12 @@
                       >
                       <select
                         id="tienda"
-                        v-model="modulo.tienda"
+                        v-model="auditHeaders.storeName"
                         required
                         class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                       >
                         <option value="" disabled>Seleccionar tienda...</option>
-                        <option v-for="t in tiendas" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in stores" :key="t" :value="t">{{ t }}</option>
                       </select>
                     </div>
 
@@ -60,7 +60,7 @@
                       >
                       <input
                         id="jefeTienda"
-                        v-model="modulo.jefeTienda"
+                        v-model="auditHeaders.storeManager"
                         type="text"
                         required
                         placeholder="Nombre del jefe..."
@@ -76,7 +76,7 @@
                       >
                       <input
                         id="auditor"
-                        v-model="modulo.auditor"
+                        v-model="auditHeaders.auditorName"
                         type="text"
                         disabled
                         class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
@@ -89,7 +89,7 @@
                       >
                       <input
                         id="fechaAuditoria"
-                        v-model="modulo.fechaAuditoria"
+                        v-model="auditHeaders.auditDate"
                         type="text"
                         disabled
                         class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
@@ -103,7 +103,7 @@
                     >
                     <input
                       id="estado"
-                      v-model="modulo.estado"
+                      :value="stateText"
                       type="text"
                       disabled
                       class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
@@ -116,7 +116,7 @@
                     >
                     <textarea
                       id="observaciones"
-                      v-model="modulo.observacionesGenerales"
+                      v-model="auditHeaders.observations"
                       rows="4"
                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                     ></textarea>
@@ -149,29 +149,38 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, watch } from 'vue'
-import type { Modulo } from '@/models/models'
+import { defineEmits, defineProps, watch, computed, ref } from 'vue' // Importa ref
+import type { AuditHeaders } from '@/models/models'
 
 const emit = defineEmits(['guardado', 'cerrar'])
 const props = defineProps<{
-  modulo: Modulo
+  auditHeaders: AuditHeaders
   show: Boolean
 }>()
 
-const tiendas = ['Sucursal Santiago', 'Sucursal La Serena', 'Sucursal Rancagua']
-const paises = ['Chile', 'Colombia']
+// Crea una copia interna del objeto de props para trabajar localmente.
+// Esto previene mutaciones directas a las props.
+const internalAuditHeaders = ref<AuditHeaders>({ ...props.auditHeaders })
 
+// Observa cambios en el prop 'auditHeaders' y actualiza la copia interna
+// Esto es crucial para cuando el padre carga un draft y lo pasa al formulario.
 watch(
-  () => props.modulo,
+  () => props.auditHeaders,
   (newValue) => {
-    localStorage.setItem('auditDraft', JSON.stringify(newValue))
+    internalAuditHeaders.value = { ...newValue }
   },
-  { deep: true },
+  { deep: true, immediate: true }, // 'immediate' para que se ejecute al montar
 )
 
+const stores = ['Sucursal Santiago', 'Sucursal La Serena', 'Sucursal Rancagua']
+const countries = ['Chile', 'Colombia']
+const stateText = computed(() => {
+  return internalAuditHeaders.value.isCompleted ? 'Completado' : 'Incompleto'
+})
+
 const guardarFormulario = () => {
-  localStorage.setItem('auditDraft', JSON.stringify(props.modulo))
-  emit('guardado')
+  // Emitimos la copia interna del objeto, que ya tiene los cambios del formulario
+  emit('guardado', internalAuditHeaders.value)
 }
 
 const cerrarFormulario = () => {
