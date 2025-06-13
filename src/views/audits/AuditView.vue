@@ -372,6 +372,10 @@ watch(
   (newVal) => {
     // Evitar guardar si aún no está completamente inicializado o si es un cambio menor durante la carga inicial
     if (newVal && newVal.storeName !== '') {
+      console.log(
+        'Guardando auditDraft completo en localStorage:',
+        JSON.stringify(toRaw(newVal), null, 2),
+      )
       localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(newVal)))
       console.log('auditHeaders guardado automáticamente en localStorage.')
     }
@@ -399,7 +403,7 @@ const subModuloSeleccionado = ref<AuditModules | null>(null)
 function abrirSubModulo(sub: AuditModules) {
   // Asegurarse de que el subModuloSeleccionado es una copia profunda o raw
   // para que el componente hijo no modifique directamente el auditHeaders.auditModules
-  subModuloSeleccionado.value = deepCopyAuditModule(sub)
+  subModuloSeleccionado.value = sub
   console.log('Abriendo submódulo:', subModuloSeleccionado.value)
 }
 
