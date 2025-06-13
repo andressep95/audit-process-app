@@ -1,9 +1,6 @@
-<!-- src/views/admin/AuditView.vue -->
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Contenedor para la tabla de auditorías -->
     <div class="px-6 py-1">
-      <!-- Tabla de auditorías -->
       <div
         @click="mostrarFormulario = true"
         class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
@@ -24,7 +21,7 @@
                       stroke-linecap="round"
                       stroke-linejoin="round"
                       stroke-width="2"
-                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 2 0 011 1v5m-4 0h4"
                     />
                   </svg>
                 </div>
@@ -100,7 +97,6 @@
             </div>
           </div>
 
-          <!-- Información del equipo -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-100">
             <div class="flex items-center gap-3">
               <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
@@ -198,7 +194,6 @@
             </div>
           </div>
 
-          <!-- Observaciones -->
           <div class="mt-6 pt-6 border-t border-gray-100">
             <div class="flex items-start gap-3">
               <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
@@ -227,7 +222,6 @@
           </div>
         </div>
       </div>
-      <!-- Sección de Submódulos -->
       <div class="mt-4">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
         <SubModuleCards
@@ -236,17 +230,15 @@
         />
       </div>
 
-      <!-- Formulario dinámico -->
       <component
         v-if="subModuloSeleccionado"
         :is="getFormularioComponent(subModuloSeleccionado.id)"
         :subModulo="subModuloSeleccionado"
         @guardar="actualizarSubModulo"
-        @cerrar="cerrarFormulario"
+        @cerrar="cerrarFormularioDeModulo"
       />
     </div>
 
-    <!-- Modal del formulario de auditoría -->
     <AuditHeaderForm
       :show="mostrarFormulario"
       :auditHeaders="auditHeaders"
@@ -257,14 +249,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent, toRaw } from 'vue'
+import { ref, onMounted, defineAsyncComponent, toRaw, watch } from 'vue' // Agregado 'watch'
 import dayjs from 'dayjs'
 import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
-import type { AuditHeaders, AuditModules } from '@/models/models'
+import type { AuditHeaders, AuditModules, AuditSubTask, Task } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
 
 const mostrarFormulario = ref(false)
+
+// Clave para guardar el borrador general de la auditoría en localStorage
+const AUDIT_DRAFT_KEY = 'auditDraft'
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
@@ -280,50 +275,6 @@ function obtenerAuditorDesdeToken(): string {
     console.error('Error al decodificar token:', error)
     return 'Auditor Desconocido'
   }
-}
-
-const cargarDesdeLocalStorage = () => {
-  const draft = localStorage.getItem('auditDraft')
-  const hoyISO = dayjs().format('YYYY-MM-DD')
-
-  if (draft) {
-    try {
-      const parsed = JSON.parse(draft)
-      if (!parsed.fechaAuditoria) throw new Error('Fecha de auditoría ausente')
-
-      const [day, month, year] = parsed.fechaAuditoria.split('/')
-      if (!day || !month || !year) throw new Error('Formato de fecha inválido')
-
-      const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-
-      if (draftISO === hoyISO) {
-        parsed.auditorName = obtenerAuditorDesdeToken()
-        auditHeaders.value = parsed
-        mostrarFormulario.value = false
-      } else {
-        console.info('Draft con fecha vieja, se elimina')
-        localStorage.removeItem('auditDraft')
-      }
-    } catch (e) {
-      console.error('Error al leer el borrador:', e)
-      localStorage.removeItem('auditDraft')
-    }
-  } else {
-    mostrarFormulario.value = true
-  }
-}
-
-const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
-  if (!moduloGuardado.auditDate) {
-    moduloGuardado.auditDate = dayjs().format('DD/MM/YYYY')
-  }
-  auditHeaders.value = moduloGuardado
-  mostrarFormulario.value = false
-  localStorage.setItem('auditDraft', JSON.stringify(moduloGuardado))
-}
-
-const onFormularioCerrado = () => {
-  mostrarFormulario.value = false
 }
 
 const auditHeaders = ref<AuditHeaders>({
@@ -378,14 +329,85 @@ const auditHeaders = ref<AuditHeaders>({
   ],
 })
 
+const cargarDesdeLocalStorage = () => {
+  const draft = localStorage.getItem(AUDIT_DRAFT_KEY)
+  const hoyISO = dayjs().format('YYYY-MM-DD')
+
+  if (draft) {
+    try {
+      const parsed = JSON.parse(draft)
+      // Asegurarse de que el objeto parseado tiene las propiedades necesarias
+      if (!parsed || !parsed.auditDate || !parsed.auditModules) {
+        throw new Error('Formato de borrador inválido o incompleto')
+      }
+
+      const [day, month, year] = parsed.auditDate.split('/')
+      if (!day || !month || !year) throw new Error('Formato de fecha inválido en borrador')
+
+      const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+
+      if (draftISO === hoyISO) {
+        parsed.auditorName = obtenerAuditorDesdeToken()
+        auditHeaders.value = parsed
+        mostrarFormulario.value = false // Si hay un borrador de hoy, no mostrar el formulario inicial
+        console.log('Borrador de auditoría cargado desde localStorage:', parsed)
+      } else {
+        console.info('Borrador de auditoría con fecha antigua. Se elimina.')
+        localStorage.removeItem(AUDIT_DRAFT_KEY)
+        mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
+      }
+    } catch (e) {
+      console.error('Error al leer o parsear el borrador de auditoría:', e)
+      localStorage.removeItem(AUDIT_DRAFT_KEY) // Limpiar datos corruptos
+      mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
+    }
+  } else {
+    mostrarFormulario.value = true // Si no hay borrador, mostrar el formulario inicial
+  }
+}
+
+// Watcher para guardar el auditHeaders completo en localStorage cada vez que cambie
+watch(
+  auditHeaders,
+  (newVal) => {
+    // Evitar guardar si aún no está completamente inicializado o si es un cambio menor durante la carga inicial
+    if (newVal && newVal.storeName !== '') {
+      localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(newVal)))
+      console.log('auditHeaders guardado automáticamente en localStorage.')
+    }
+  },
+  { deep: true },
+)
+
+const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
+  if (!moduloGuardado.auditDate) {
+    moduloGuardado.auditDate = dayjs().format('DD/MM/YYYY')
+  }
+  auditHeaders.value = moduloGuardado
+  mostrarFormulario.value = false
+  // El watcher de auditHeaders ya se encarga de guardar, pero puedes dejar esta línea
+  // como una "seguridad" adicional para cuando se guarda explícitamente el header.
+  // localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(moduloGuardado)));
+}
+
+const onFormularioCerrado = () => {
+  mostrarFormulario.value = false
+}
+
 const subModuloSeleccionado = ref<AuditModules | null>(null)
 
 function abrirSubModulo(sub: AuditModules) {
-  subModuloSeleccionado.value = { ...sub }
+  // Asegurarse de que el subModuloSeleccionado es una copia profunda o raw
+  // para que el componente hijo no modifique directamente el auditHeaders.auditModules
+  subModuloSeleccionado.value = deepCopyAuditModule(sub)
+  console.log('Abriendo submódulo:', subModuloSeleccionado.value)
 }
 
-function cerrarFormulario() {
+// Nueva función para manejar el cierre desde el formulario del submódulo
+function cerrarFormularioDeModulo() {
   subModuloSeleccionado.value = null
+  // El watcher de auditHeaders ya habrá guardado los cambios.
+  console.log('Formulario de submódulo cerrado. auditHeaders debe estar guardado.')
 }
 
 function getFormularioComponent(id: number) {
@@ -408,12 +430,34 @@ function getFormularioComponent(id: number) {
 function actualizarSubModulo(subModuloActualizado: AuditModules) {
   const index = auditHeaders.value.auditModules.findIndex((s) => s.id === subModuloActualizado.id)
   if (index !== -1) {
-    // Reemplaza el módulo existente con el módulo actualizado
-    auditHeaders.value.auditModules[index] = subModuloActualizado
+    // Reemplaza el módulo existente en auditHeaders con el módulo actualizado
+    auditHeaders.value.auditModules[index] = toRaw(subModuloActualizado)
+    console.log(`Submódulo ${subModuloActualizado.moduleName} actualizado en auditHeaders.`)
   }
-  cerrarFormulario()
-  // Guarda todo el objeto auditHeaders después de actualizar un submódulo
-  localStorage.setItem('auditDraft', JSON.stringify(auditHeaders.value))
+  cerrarFormularioDeModulo() // Usa la nueva función de cierre
+  // El watcher de auditHeaders se encargará de guardar todo el objeto actualizado en localStorage
+}
+
+// Función auxiliar para realizar una copia profunda de un AuditModules (si es necesario)
+// Esto evita que el componente hijo modifique el objeto original reactivo
+const deepCopyAuditModule = (sourceModule: AuditModules): AuditModules => {
+  const copiedModule: AuditModules = {
+    ...sourceModule,
+    tasks: sourceModule.tasks.map((task) => {
+      const copiedTask: Task = {
+        ...task,
+        subtasks: task.subtasks.map((subtask) => {
+          const copiedSubtask: AuditSubTask = {
+            ...subtask,
+            observations: subtask.observations.map((obs) => ({ ...obs })),
+          }
+          return copiedSubtask
+        }),
+      }
+      return copiedTask
+    }),
+  }
+  return copiedModule
 }
 
 onMounted(() => {

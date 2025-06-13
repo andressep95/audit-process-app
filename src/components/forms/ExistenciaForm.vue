@@ -682,11 +682,4 @@ const guardarModulo = () => {
   saveToLocalStorage(currentSubModulo.value) // Asegura el guardado final
   emit('guardar', currentSubModulo.value)
 }
-
-const cerrar = () => {
-  // Esta función original ya no se usa directamente para cerrar,
-  // sino a través de cerrarModalYGuardar para asegurar el guardado.
-  // Podría eliminarse si no se usa en ningún otro lado.
-  emit('cerrar')
-}
 </script>
