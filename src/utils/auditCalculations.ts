@@ -1,4 +1,3 @@
-// src/utils/auditCalculations.ts
 import type { AuditModules, Task, AuditSubTask } from '@/models/models'
 
 export function calculateModuleCompliance(module: AuditModules): AuditModules {
@@ -18,8 +17,8 @@ export function calculateModuleCompliance(module: AuditModules): AuditModules {
       const isActuallyAudited = subtask.auditedSamples >= 1 // Muestras auditadas >= 1
 
       if (isActuallyAudited) {
-        subtask.errorPercentage = (subtask.errorsFound / subtask.auditedSamples) * 100
-        subtask.compliancePercentage = 100 - subtask.errorPercentage
+        subtask.errorPercentage = Math.round((subtask.errorsFound / subtask.auditedSamples) * 100)
+        subtask.compliancePercentage = Math.round(100 - subtask.errorPercentage)
         subtask.isCompleted = true
       } else {
         subtask.errorPercentage = 0
@@ -36,7 +35,7 @@ export function calculateModuleCompliance(module: AuditModules): AuditModules {
     })
 
     if (totalSamplesTask > 0) {
-      task.compliancePercentage = 100 - (totalErrorsTask / totalSamplesTask) * 100
+      task.compliancePercentage = Math.round(100 - (totalErrorsTask / totalSamplesTask) * 100)
     } else if (task.subtasks.length > 0 && completedSubtasksInTask === 0) {
       task.compliancePercentage = 0
     } else {
@@ -45,7 +44,9 @@ export function calculateModuleCompliance(module: AuditModules): AuditModules {
         .reduce((sum, st) => sum + st.compliancePercentage, 0)
 
       if (completedSubtasksInTask > 0) {
-        task.compliancePercentage = completedSubtasksComplianceSum / completedSubtasksInTask
+        task.compliancePercentage = Math.round(
+          completedSubtasksComplianceSum / completedSubtasksInTask,
+        )
       } else {
         task.compliancePercentage = 0
       }
@@ -70,7 +71,7 @@ export function calculateModuleCompliance(module: AuditModules): AuditModules {
   })
 
   if (module.tasks.length > 0) {
-    module.compliancePercentage = totalModuleCompliance / module.tasks.length
+    module.compliancePercentage = Math.round(totalModuleCompliance / module.tasks.length)
   } else {
     module.compliancePercentage = 100 // O si un módulo sin tareas se considera completado por defecto.
   }
@@ -87,5 +88,5 @@ export function calculateModuleCompliance(module: AuditModules): AuditModules {
 
   module.isCompleted = module.tasks.length > 0 && completedTasksCount === module.tasks.length
 
-  return module // Retorna el módulo actualizado
+  return module
 }

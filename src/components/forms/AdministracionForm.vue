@@ -1,49 +1,46 @@
 <template>
   <div
-    class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center"
+    class="fixed inset-0 bg-gray-900 bg-opacity-40 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4"
     @click="handleClickOutside"
   >
-    <div ref="modalContent" class="bg-white p-8 rounded-lg shadow-xl max-w-4xl w-full relative">
+    <div
+      ref="modalContent"
+      class="bg-white p-8 rounded-xl shadow-2xl max-w-4xl w-full relative border border-gray-100 transform transition-all duration-300 scale-100 opacity-100"
+    >
       <div v-if="currentSubModulo">
-        <h3 class="text-2xl font-bold mb-4 text-gray-800">
+        <h3 class="text-3xl font-extrabold mb-6 text-gray-800 tracking-tight">
           Módulo: {{ currentSubModulo.moduleName }}
         </h3>
-        <p class="text-gray-600 mb-6">
-          Por favor, complete las muestras auditadas y los errores encontrados para cada subtarea.
-        </p>
 
-        <form @submit.prevent="guardarModulo" class="space-y-6">
+        <form @submit.prevent="guardarModulo" class="space-y-8">
           <div
             v-if="currentTask"
             :key="currentTask.id"
-            class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm"
+            class="border border-gray-200 rounded-xl p-6 bg-white shadow-lg"
           >
-            <h4 class="text-xl font-semibold mb-3 text-gray-700">
-              Tarea: {{ currentTask.taskCode }}. {{ currentTask.procedureDescription }}
-            </h4>
-
             <div
               v-if="currentTask.subtasks.length > 0"
-              class="flex justify-between items-center mb-4"
+              class="flex justify-between items-center mb-6 border-b pb-4 border-gray-200"
             >
-              <h5 class="text-lg font-medium text-gray-700">
-                Subtarea {{ currentSubtaskIndex + 1 }} de {{ currentTask.subtasks.length }} (Req.
-                {{ currentSubtask?.requerimentCode }})
+              <h5 class="text-lg font-semibold text-gray-700">
+                {{ `${currentTask?.taskCode}. ${currentTask?.procedureDescription} Subtarea` }}
+                {{ currentSubtaskIndex + 1 }} de
+                {{ currentTask?.subtasks.length }}
               </h5>
               <div class="space-x-2">
                 <button
                   type="button"
                   @click.stop="goToPrevSubtask"
-                  :disabled="currentSubtaskIndex === 0"
-                  class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!canGoPrevSubtask"
+                  class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
                 >
                   &lt;
                 </button>
                 <button
                   type="button"
                   @click.stop="goToNextSubtask"
-                  :disabled="currentSubtaskIndex === currentTask.subtasks.length - 1"
-                  class="px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="!canGoNextSubtask"
+                  class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
                 >
                   &gt;
                 </button>
@@ -53,128 +50,100 @@
             <div
               v-if="currentSubtask"
               :key="currentSubtask.id"
-              class="mb-4 bg-gray-50 p-4 rounded-md border border-gray-100"
+              class="mb-4 bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-inner"
             >
-              <p class="text-base text-gray-700 font-medium mb-2">
-                {{ currentTask.taskCode }}.{{ currentSubtask.requerimentCode }}
-                {{ currentSubtask.procedureDescription }}
+              <p class="text-base text-gray-800 font-medium mb-3">
+                {{ currentTask?.taskCode }}.{{ currentSubtask?.requerimentCode }}
+                {{ currentSubtask?.procedureDescription }}
               </p>
-              <p class="text-sm text-gray-500 mb-3">
-                Nivel de Riesgo: {{ currentSubtask.riskLevel }}
+              <p class="text-sm text-gray-600 mb-4">
+                Nivel de Riesgo: <span class="font-semibold">{{ currentSubtask.riskLevel }}</span>
               </p>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                 <div>
                   <label
                     :for="`auditedSamples-${currentSubtask.id}`"
-                    class="block text-sm font-medium text-gray-700"
-                    >Muestras Auditadas</label
+                    class="block text-sm font-medium text-gray-700 mb-1"
                   >
+                    Muestras Auditadas
+                  </label>
                   <input
                     :id="`auditedSamples-${currentSubtask.id}`"
                     type="number"
                     v-model.number="currentSubtask.auditedSamples"
                     min="0"
-                    required
-                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
                   />
                 </div>
                 <div>
                   <label
                     :for="`errorsFound-${currentSubtask.id}`"
-                    class="block text-sm font-medium text-gray-700"
-                    >Errores Encontrados</label
+                    class="block text-sm font-medium text-gray-700 mb-1"
                   >
+                    Errores Encontrados
+                  </label>
                   <input
                     :id="`errorsFound-${currentSubtask.id}`"
                     type="number"
                     v-model.number="currentSubtask.errorsFound"
                     min="0"
-                    required
-                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    :max="currentSubtask.auditedSamples"
+                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
                   />
                 </div>
               </div>
 
-              <div class="mt-4">
-                <h5 class="text-base font-medium text-gray-700 mb-2">Observaciones:</h5>
-                <div
-                  v-for="(obs, obsIndex) in currentSubtask.observations"
-                  :key="obs.id"
-                  class="mb-2"
-                >
-                  <textarea
-                    v-model="obs.observationText"
-                    rows="2"
-                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    placeholder="Escribe tu observación aquí..."
-                  ></textarea>
-                  <button
-                    type="button"
-                    @click.stop="removeObservation(currentSubtask, obsIndex)"
-                    class="text-red-600 hover:text-red-800 text-sm mt-1"
-                  >
-                    Eliminar Observación
-                  </button>
-                </div>
+              <div class="mt-5 text-right">
                 <button
                   type="button"
-                  @click.stop="addObservation(currentSubtask)"
-                  class="mt-2 text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                  @click.stop="openObservationModal"
+                  class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Agregar Observación
+                  Gestionar Observaciones
                 </button>
               </div>
             </div>
-            <p v-else class="text-center text-gray-500">No hay subtareas para esta tarea.</p>
+            <p v-else class="text-gray-500 italic p-4 text-center">
+              No hay subtareas definidas para esta tarea.
+            </p>
           </div>
-          <p v-else class="text-center text-gray-500">Cargando tareas...</p>
 
-          <div class="mt-6 flex justify-between gap-3">
+          <p v-else class="text-gray-500 italic p-4 text-center">
+            No hay tareas definidas para este módulo.
+          </p>
+
+          <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
             <button
               type="button"
-              @click.stop="prevTask"
-              :disabled="currentTaskIndex === 0"
-              class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              @click.stop="goToPrevTask"
+              :disabled="!canGoPrevTask"
+              class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              Anterior Tarea
+              Tarea Anterior
             </button>
 
-            <div class="flex gap-3">
+            <div class="flex gap-4">
               <button
                 type="button"
                 @click.stop="cerrarModalYGuardar"
-                class="px-5 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+                class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
               >
-                Cancelar
+                Cerrar
               </button>
 
               <button
                 type="button"
                 v-if="currentSubModulo && currentTaskIndex < currentSubModulo.tasks.length - 1"
-                @click.stop="nextTask"
-                class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                @click.stop="goToNextTask"
+                class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
               >
                 Siguiente Tarea
               </button>
               <button
                 type="submit"
-                v-else-if="currentSubModulo"
-                class="px-5 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                v-else
+                class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
               >
                 Guardar Módulo
               </button>
@@ -182,82 +151,220 @@
           </div>
         </form>
       </div>
-      <div v-else class="text-center text-gray-700 p-8">Cargando datos del módulo...</div>
+      <div v-else class="text-center p-6 text-gray-700">
+        <p class="text-xl">Cargando módulo...</p>
+      </div>
+    </div>
+  </div>
+
+  <div
+    v-if="showIncompleteTasksWarningModal"
+    class="fixed inset-0 bg-gray-900 bg-opacity-40 flex justify-center items-center z-[100] p-4"
+    @click.self="showIncompleteTasksWarningModal = false"
+  >
+    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full relative border border-gray-100">
+      <h4 class="text-2xl font-bold mb-4 text-gray-800 text-center">Tareas Pendientes</h4>
+      <p class="mb-6 text-gray-700 leading-relaxed">
+        Tiene tareas sin culminar en las siguientes secciones:
+      </p>
+      <ul class="list-disc list-inside mb-8 text-gray-600 space-y-2 pl-4">
+        <li v-for="task in incompleteTasksList" :key="task.id" class="text-base">
+          <span class="font-semibold text-gray-800">{{ task.taskCode }}:</span>
+          {{ task.procedureDescription }}
+        </li>
+      </ul>
+      <button
+        type="button"
+        @click="showIncompleteTasksWarningModal = false"
+        class="px-6 py-3 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors w-full text-lg"
+      >
+        Entendido
+      </button>
+    </div>
+  </div>
+
+  <div
+    v-if="showObservationModal"
+    class="fixed inset-0 bg-gray-900 bg-opacity-20 flex justify-center items-center z-[110] p-4"
+    @click.self="closeObservationModal"
+  >
+    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative border border-gray-100">
+      <h5 class="text-lg font-semibold mb-4 text-gray-800">
+        Observación para: {{ currentSubtask?.requerimentCode }}
+      </h5>
+      <textarea
+        v-if="currentSubtask?.observations?.[0]"
+        v-model="currentSubtask.observations[0].observationText"
+        rows="5"
+        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
+        placeholder="Escriba aquí sus observaciones..."
+      ></textarea>
+      <p v-else class="text-gray-500 italic mb-4">No hay observación registrada.</p>
+
+      <div class="mt-5 flex justify-end space-x-3">
+        <button
+          type="button"
+          @click="closeObservationModal"
+          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          Cerrar
+        </button>
+        <button
+          type="button"
+          @click="saveObservation"
+          class="px-4 py-2 bg-gray-800 text-white rounded-md shadow-sm hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
+        >
+          Guardar Observación
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, toRaw, nextTick } from 'vue'
+import { ref, watch, computed, nextTick, toRaw } from 'vue'
 import type { AuditModules, Task, AuditSubTask, AuditObservations } from '@/models/models'
+import { calculateModuleCompliance } from '@/utils/auditCalculations'
+import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers'
 
 const props = defineProps<{
-  subModulo: AuditModules // Este subModulo viene del padre (AuditView.vue)
+  subModulo: AuditModules | null
 }>()
 
 const emit = defineEmits<{
-  (e: 'guardar', payload: AuditModules): void
+  (e: 'guardar', subModulo: AuditModules): void
   (e: 'cerrar'): void
 }>()
 
-// currentSubModulo ahora se inicializa a null y será asignado en el watch
 const currentSubModulo = ref<AuditModules | null>(null)
-
 const currentTaskIndex = ref(0)
 const currentSubtaskIndex = ref(0)
+const modalContent = ref<HTMLElement | null>(null)
+
+const showIncompleteTasksWarningModal = ref(false)
+const showObservationModal = ref(false)
 
 const currentTask = computed<Task | undefined>(() => {
   return currentSubModulo.value?.tasks[currentTaskIndex.value]
 })
 
 const currentSubtask = computed<AuditSubTask | undefined>(() => {
-  if (currentTask.value && currentTask.value.subtasks.length > currentSubtaskIndex.value) {
-    return currentTask.value.subtasks[currentSubtaskIndex.value]
-  }
-  return undefined
+  // Verificamos currentTask antes de acceder a subtasks
+  return currentTask.value?.subtasks[currentSubtaskIndex.value]
 })
 
-const modalContent = ref<HTMLElement | null>(null)
+const incompleteTasksList = computed(() => {
+  if (!currentSubModulo.value) return []
+  return currentSubModulo.value.tasks.filter((task) => !task.isCompleted)
+})
 
-const LOCAL_STORAGE_KEY = computed(() => `auditModule_${props.subModulo.id}`) // Clave única para cada módulo
+const canGoNextSubtask = computed(() => {
+  return currentTask.value && currentSubtaskIndex.value < currentTask.value.subtasks.length - 1
+})
 
-const saveToLocalStorage = (data: AuditModules) => {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY.value, JSON.stringify(toRaw(data)))
-    console.log('Datos guardados en localStorage:', LOCAL_STORAGE_KEY.value)
-  } catch (e) {
-    console.error('Error al guardar en localStorage:', e)
-  }
+const canGoPrevSubtask = computed(() => {
+  return currentSubtaskIndex.value > 0
+})
+
+const canGoNextTask = computed(() => {
+  return currentSubModulo.value && currentTaskIndex.value < currentSubModulo.value.tasks.length - 1
+})
+
+const canGoPrevTask = computed(() => {
+  return currentTaskIndex.value > 0
+})
+
+const saveToLocalStorage = (module: AuditModules) => {
+  localStorage.setItem(`auditModule_${module.id}`, JSON.stringify(toRaw(module)))
+  console.log(`Módulo ${module.moduleName} guardado en localStorage.`)
 }
 
-const loadFromLocalStorage = (): AuditModules | null => {
-  try {
-    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY.value)
-    if (storedData) {
-      const parsedData: AuditModules = JSON.parse(storedData)
-      if (parsedData.id === props.subModulo.id) {
-        // Solo verificamos el ID
-        return parsedData
+const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
+  const stored = localStorage.getItem(`auditModule_${moduleId}`)
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored)
+      if (parsed && parsed.id === moduleId && parsed.tasks) {
+        return parsed as AuditModules
       }
+      throw new Error('Datos de módulo inválidos en localStorage.')
+    } catch (e) {
+      console.error(`Error al cargar o parsear módulo ${moduleId} de localStorage:`, e)
+      localStorage.removeItem(`auditModule_${moduleId}`)
+      return null
     }
-  } catch (e) {
-    console.error('Error al cargar de localStorage:', e)
-    localStorage.removeItem(LOCAL_STORAGE_KEY.value) // Limpiar datos corruptos
   }
   return null
 }
 
-const handleClickOutside = (event: MouseEvent) => {
-  if (modalContent.value && !modalContent.value.contains(event.target as Node)) {
-    cerrarModalYGuardar()
+const initializeObservations = (subtask: AuditSubTask) => {
+  if (!subtask.observations || subtask.observations.length === 0) {
+    // Si no hay observaciones, inicializamos un array con un objeto de observación vacío
+    subtask.observations = [{ id: 1, observationText: '', imageUrl: '' }]
+  } else {
+    // Si hay observaciones pero la primera no es válida o no tiene el campo, asegúrate de que esté correcto
+    if (!subtask.observations[0] || subtask.observations[0].observationText === undefined) {
+      subtask.observations[0] = { id: 1, observationText: '', imageUrl: '' }
+    }
   }
 }
 
-const cerrarModalYGuardar = () => {
-  if (currentSubModulo.value) {
-    saveToLocalStorage(currentSubModulo.value) // Guarda antes de cerrar
+const openObservationModal = () => {
+  if (currentSubtask.value) {
+    // Asegura que el objeto de observación exista antes de abrir el modal
+    initializeObservations(currentSubtask.value)
+    showObservationModal.value = true
   }
-  emit('cerrar') // Emite el evento de cierre
+}
+
+const closeObservationModal = () => {
+  showObservationModal.value = false
+}
+
+const saveObservation = () => {
+  closeObservationModal()
+}
+
+const goToNextSubtask = () => {
+  if (currentTask.value && currentSubtaskIndex.value < currentTask.value.subtasks.length - 1) {
+    currentSubtaskIndex.value++
+    if (currentSubtask.value) {
+      initializeObservations(currentSubtask.value)
+    }
+    scrollToTop()
+  }
+}
+
+const goToPrevSubtask = () => {
+  if (currentSubtaskIndex.value > 0) {
+    currentSubtaskIndex.value--
+    if (currentSubtask.value) {
+      initializeObservations(currentSubtask.value)
+    }
+    scrollToTop()
+  }
+}
+
+const goToNextTask = () => {
+  if (currentSubModulo.value && currentTaskIndex.value < currentSubModulo.value.tasks.length - 1) {
+    currentTaskIndex.value++
+    currentSubtaskIndex.value = 0
+    if (currentSubtask.value) {
+      initializeObservations(currentSubtask.value)
+    }
+    scrollToTop()
+  }
+}
+
+const goToPrevTask = () => {
+  if (currentTaskIndex.value > 0) {
+    currentTaskIndex.value--
+    currentSubtaskIndex.value = 0
+    if (currentSubtask.value) {
+      initializeObservations(currentSubtask.value)
+    }
+    scrollToTop()
+  }
 }
 
 const scrollToTop = () => {
@@ -266,166 +373,86 @@ const scrollToTop = () => {
   }
 }
 
-const goToNextSubtask = () => {
-  if (currentTask.value && currentSubtaskIndex.value < currentTask.value.subtasks.length - 1) {
-    currentSubtaskIndex.value++
-    nextTick(() => {
-      scrollToTop()
-    })
+const cerrarModalYGuardar = () => {
+  if (currentSubModulo.value) {
+    currentSubModulo.value = calculateModuleCompliance(currentSubModulo.value)
+    saveToLocalStorage(currentSubModulo.value)
+    emit('guardar', currentSubModulo.value)
+  }
+  emit('cerrar')
+}
+
+const guardarModulo = () => {
+  if (!currentSubModulo.value) return
+
+  currentSubModulo.value = calculateModuleCompliance(currentSubModulo.value)
+
+  let hasIncompleteTasksDetected = false
+  for (const task of currentSubModulo.value.tasks) {
+    if (task.subtasks.length === 0) {
+      task.isCompleted = true
+      continue
+    }
+
+    let allSubtasksAudited = true
+    for (const subtask of task.subtasks) {
+      if (subtask.auditedSamples < 1) {
+        allSubtasksAudited = false
+        break
+      }
+    }
+    task.isCompleted = allSubtasksAudited
+    if (!task.isCompleted) {
+      hasIncompleteTasksDetected = true
+    }
+  }
+
+  currentSubModulo.value.isCompleted = !hasIncompleteTasksDetected
+
+  if (hasIncompleteTasksDetected) {
+    showIncompleteTasksWarningModal.value = true
+    console.warn(
+      'Módulo con tareas incompletas. Mostrando advertencia y no realizando guardado final.',
+    )
+    return
+  }
+
+  saveToLocalStorage(currentSubModulo.value)
+  emit('guardar', currentSubModulo.value)
+  console.log('Módulo guardado y marcado como completado.')
+}
+
+const handleClickOutside = (event: MouseEvent) => {
+  if (modalContent.value && !modalContent.value.contains(event.target as Node)) {
+    cerrarModalYGuardar()
   }
 }
 
-const goToPrevSubtask = () => {
-  if (currentSubtaskIndex.value > 0) {
-    currentSubtaskIndex.value--
-    nextTick(() => {
-      scrollToTop()
-    })
-  }
-}
-
-const nextTask = () => {
-  if (currentSubModulo.value && currentTaskIndex.value < currentSubModulo.value.tasks.length - 1) {
-    currentTaskIndex.value++
-    currentSubtaskIndex.value = 0
-    nextTick(() => {
-      scrollToTop()
-    })
-  }
-}
-
-const prevTask = () => {
-  if (currentTaskIndex.value > 0) {
-    currentTaskIndex.value--
-    currentSubtaskIndex.value = 0
-    nextTick(() => {
-      scrollToTop()
-    })
-  }
-}
-
-// Esta función es vital para inicializar las tareas si no vienen cargadas
-const initializeTasksForExistencia = () => {
-  // Solo inicializa si las tareas están vacías
-  if (currentSubModulo.value && currentSubModulo.value.tasks.length === 0) {
-    const initialTasks: Task[] = [
-      // ... (Tus datos de tareas iniciales, no los he modificado aquí)
-      {
-        id: 1,
-        taskCode: 'A',
-        procedureDescription: 'Fiscalizacion',
-        compliancePercentage: 0,
-        taskRating: '',
-        isCompleted: false,
-        subtasks: [
-          {
-            id: 1,
-            requerimentCode: 1,
-            procedureDescription:
-              'Patente comercial se encuentra vigente y a la vista de los clientes',
-            riskLevel: '',
-            auditedSamples: 0,
-            errorsFound: 0,
-            errorPercentage: 0,
-            compliancePercentage: 0,
-            isCompleted: false,
-            observations: [],
-          },
-          {
-            id: 2,
-            requerimentCode: 2,
-            procedureDescription:
-              'El Jefe de Tienda y Encargado de Zona sabe dónde se encuentra la declaración de IVA de los meses anteriores',
-            riskLevel: '',
-            auditedSamples: 0,
-            errorsFound: 0,
-            errorPercentage: 0,
-            compliancePercentage: 0,
-            isCompleted: false,
-            observations: [],
-          },
-        ],
-      },
-      {
-        id: 2,
-        taskCode: 'B',
-        procedureDescription: 'Temas Varios',
-        compliancePercentage: 0,
-        taskRating: '',
-        isCompleted: false,
-        subtasks: [
-          {
-            id: 1,
-            requerimentCode: 1,
-            procedureDescription:
-              'Los colaboradores conocen los procedimientos o instructivos que rigen la forma de operar de la tienda',
-            riskLevel: '',
-            auditedSamples: 0,
-            errorsFound: 0,
-            errorPercentage: 0,
-            compliancePercentage: 0,
-            isCompleted: false,
-            observations: [],
-          },
-          {
-            id: 2,
-            requerimentCode: 2,
-            procedureDescription:
-              'El libro de sugerencias, Felicitaciones y reclamos cumple con las normas y requisitos establecidos',
-            riskLevel: '',
-            auditedSamples: 0,
-            errorsFound: 0,
-            errorPercentage: 0,
-            compliancePercentage: 0,
-            isCompleted: false,
-            observations: [],
-          },
-        ],
-      },
-      {
-        id: 3,
-        taskCode: 'C',
-        procedureDescription: 'Seguimiento visita anterior',
-        compliancePercentage: 0,
-        taskRating: '',
-        isCompleted: false,
-        subtasks: [
-          {
-            id: 1,
-            requerimentCode: 1,
-            procedureDescription:
-              'Cuando aplique, valide si se repiten las mismas observaciones que la auditoría anterior',
-            riskLevel: '',
-            auditedSamples: 0,
-            errorsFound: 0,
-            errorPercentage: 0,
-            compliancePercentage: 0,
-            isCompleted: false,
-            observations: [],
-          },
-        ],
-      },
-    ]
-    currentSubModulo.value.tasks = initialTasks
-  }
-}
-
-// Este watch ahora prioriza la carga de localStorage, si no hay, usa directamente el prop
 watch(
   () => props.subModulo,
   (newVal) => {
     if (newVal) {
-      const loadedData = loadFromLocalStorage()
+      const loadedData = loadFromLocalStorage(newVal.id)
       if (loadedData) {
         currentSubModulo.value = loadedData
-        console.log('Datos cargados de localStorage (AdministracionForm):', loadedData)
+        currentSubModulo.value.tasks.forEach((task) => {
+          task.subtasks.forEach((subtask) => {
+            initializeObservations(subtask)
+          })
+        })
+        console.log('Datos cargados de localStorage (AdministracionForm):', toRaw(loadedData))
       } else {
-        // Si no hay datos guardados en localStorage para este módulo,
-        // o si los cargados no son válidos, inicializa con los datos de props.
-        // NO HACEMOS deepCopy aquí si queremos que los cambios se reflejen reactivamente.
-        currentSubModulo.value = newVal // <--- CAMBIO CLAVE AQUÍ
-        initializeTasksForExistencia() // Asegura que las tareas por defecto se carguen si el prop las trae vacías.
-        console.log('Inicializando con datos de props (AdministracionForm).')
+        const initialTasks = getInitialTasksForModule(newVal.id)
+        currentSubModulo.value = { ...newVal, tasks: initialTasks }
+        currentSubModulo.value.tasks.forEach((task) => {
+          task.subtasks.forEach((subtask) => {
+            initializeObservations(subtask)
+          })
+        })
+        console.log(
+          'Módulo inicializado con tareas por defecto (AdministracionForm):',
+          toRaw(currentSubModulo.value),
+        )
       }
       currentTaskIndex.value = 0
       currentSubtaskIndex.value = 0
@@ -434,131 +461,17 @@ watch(
       })
     }
   },
-  { immediate: true, deep: true }, // 'deep: true' es crucial para observar cambios dentro de 'newVal'
+  { immediate: true, deep: true },
 )
 
-// Watch principal que ahora también guarda en localStorage
 watch(
   currentSubModulo,
   (newVal) => {
     if (newVal) {
-      // Asegurarse de que newVal no es null
-      calculateCompliance()
-      saveToLocalStorage(newVal) // Guarda automáticamente con cada cambio
+      calculateModuleCompliance(newVal)
+      console.log('currentSubModulo actualizado, cumplimiento recalculado.', toRaw(newVal))
     }
   },
   { deep: true },
 )
-
-const addObservation = (subtask: AuditSubTask) => {
-  subtask.observations.push({
-    id: Date.now(),
-    observationText: '',
-    imageUrl: '',
-  })
-}
-
-const removeObservation = (subtask: AuditSubTask, index: number) => {
-  subtask.observations.splice(index, 1)
-}
-
-const calculateCompliance = () => {
-  if (!currentSubModulo.value) return // Asegurarse de que currentSubModulo existe
-
-  currentSubModulo.value.tasks.forEach((task) => {
-    let totalSamples = 0
-    let totalErrors = 0
-    let completedSubtasks = 0
-
-    task.subtasks.forEach((subtask) => {
-      if (subtask.auditedSamples < 0) subtask.auditedSamples = 0
-      if (subtask.errorsFound < 0) subtask.errorsFound = 0
-      if (subtask.errorsFound > subtask.auditedSamples) subtask.errorsFound = subtask.auditedSamples
-
-      if (subtask.auditedSamples > 0) {
-        subtask.errorPercentage = (subtask.errorsFound / subtask.auditedSamples) * 100
-        subtask.compliancePercentage = 100 - subtask.errorPercentage
-      } else {
-        subtask.errorPercentage = 0
-        subtask.compliancePercentage = 100
-      }
-
-      if (
-        subtask.auditedSamples > 0 ||
-        subtask.errorsFound > 0 ||
-        subtask.observations.length > 0
-      ) {
-        subtask.isCompleted = true
-        completedSubtasks++
-      } else {
-        subtask.isCompleted = false
-      }
-
-      totalSamples += subtask.auditedSamples
-      totalErrors += subtask.errorsFound
-    })
-
-    if (totalSamples > 0) {
-      task.compliancePercentage = 100 - (totalErrors / totalSamples) * 100
-    } else {
-      task.compliancePercentage = 100
-    }
-
-    if (task.compliancePercentage >= 90) {
-      task.taskRating = 'Excelente'
-    } else if (task.compliancePercentage >= 70) {
-      task.taskRating = 'Bueno'
-    } else if (task.compliancePercentage >= 50) {
-      task.taskRating = 'Regular'
-    } else {
-      task.taskRating = 'Deficiente'
-    }
-    task.isCompleted = task.subtasks.length > 0 && completedSubtasks === task.subtasks.length
-  })
-
-  let totalModuleCompliance = 0
-  let completedTasksCount = 0
-
-  if (currentSubModulo.value.tasks.length > 0) {
-    currentSubModulo.value.tasks.forEach((task) => {
-      totalModuleCompliance += task.compliancePercentage
-      if (task.isCompleted) {
-        completedTasksCount++
-      }
-    })
-    currentSubModulo.value.compliancePercentage =
-      totalModuleCompliance / currentSubModulo.value.tasks.length
-  } else {
-    currentSubModulo.value.compliancePercentage = 0
-  }
-
-  if (currentSubModulo.value.compliancePercentage >= 90) {
-    currentSubModulo.value.overallRating = 'Sobresaliente'
-  } else if (currentSubModulo.value.compliancePercentage >= 70) {
-    currentSubModulo.value.overallRating = 'Satisfactorio'
-  } else if (currentSubModulo.value.compliancePercentage >= 50) {
-    currentSubModulo.value.overallRating = 'Mejorable'
-  } else {
-    currentSubModulo.value.overallRating = 'Crítico'
-  }
-
-  currentSubModulo.value.isCompleted =
-    currentSubModulo.value.tasks.length > 0 &&
-    completedTasksCount === currentSubModulo.value.tasks.length
-}
-
-const guardarModulo = () => {
-  if (currentSubModulo.value) {
-    calculateCompliance()
-    saveToLocalStorage(currentSubModulo.value) // Asegura el guardado final
-    emit('guardar', toRaw(currentSubModulo.value)) // Emite el módulo actualizado al padre
-  }
-}
-
-const cerrar = () => {
-  // Esta función original ya no se usa directamente para cerrar,
-  // sino a través de cerrarModalYGuardar para asegurar el guardado.
-  // Podría eliminarse si no se usa en ningún otro lado.
-  emit('cerrar')
-}
 </script>

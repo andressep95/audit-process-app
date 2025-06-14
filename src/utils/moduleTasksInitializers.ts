@@ -18,7 +18,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 1,
               procedureDescription:
                 'Tomar una muestra sobre la línea que presento mayor diferencia en Inventario General, verificar si están cuadrados los sku´s, evaluar según escala determinada (perdida sobre % que representa el costo de la venta, no debería sobrepasar 1%)',
-              riskLevel: 'Medio',
+              riskLevel: 'Muy Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -54,7 +54,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 1,
               procedureDescription:
                 'Identificar el espacio físico asignado para el almacenamiento de la Merma',
-              riskLevel: 'Bajo',
+              riskLevel: 'Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -67,7 +67,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 2,
               procedureDescription:
                 'Revisar en el panel web de control de existencias que se esté registrando la merma operacional, calidad y E-Commerce, y que los respaldos estén anexados en cada registro',
-              riskLevel: 'Medio',
+              riskLevel: 'Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -102,7 +102,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 1,
               procedureDescription:
                 'Recepción de Camión: Se debe revisar que no existan entregas abiertas y todas deben estar contabilizadas con su respectivo documento SAP de contabilización',
-              riskLevel: 'Medio',
+              riskLevel: 'Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -128,7 +128,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 3,
               procedureDescription:
                 'Inventarios Selectivos: Revisar que los inventarios selectivos estén registrados y contabilizados',
-              riskLevel: 'Bajo',
+              riskLevel: 'Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -141,7 +141,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 4,
               procedureDescription:
                 'Traslados, Retiros y Cambios de Almacén: Revisar que los traslados, Retiros y cambios de almacén estén correctamente registrados',
-              riskLevel: 'Medio',
+              riskLevel: 'Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -177,7 +177,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 2,
               procedureDescription:
                 'Verificar que las bodegas se encuentran ordenadas y los productos bien almacenados',
-              riskLevel: 'Bajo',
+              riskLevel: 'Medio',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -200,7 +200,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               requerimentCode: 1,
               procedureDescription:
                 'Cuando aplique, valide si se repiten las mismas observaciones que la auditoría anterior',
-              riskLevel: 'Medio',
+              riskLevel: 'Muy Alto',
               auditedSamples: 0,
               errorsFound: 0,
               errorPercentage: 0,
@@ -214,7 +214,101 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
     case 2: // Administracion - Replicar estructura similar
       return [
         // Tareas para el módulo de Administracion
-        // ... (agrega aquí las tareas y subtareas por defecto para Administración)
+        {
+          id: 1,
+          taskCode: 'A',
+          procedureDescription: 'Fiscalizacion',
+          compliancePercentage: 0,
+          taskRating: '',
+          isCompleted: false,
+          subtasks: [
+            {
+              id: 101,
+              requerimentCode: 1,
+              procedureDescription:
+                'Patente comercial se encuentra vigente y a la vista de los clientes',
+              riskLevel: 'Muy Alto',
+              auditedSamples: 0,
+              errorsFound: 0,
+              errorPercentage: 0,
+              compliancePercentage: 0,
+              isCompleted: false,
+              observations: [],
+            },
+            {
+              id: 102,
+              requerimentCode: 2,
+              procedureDescription:
+                'El Jefe de Tienda y Encargado de Zona sabe dónde se encuentra la declaración de IVA de los meses anteriores',
+              riskLevel: 'Alto',
+              auditedSamples: 0,
+              errorsFound: 0,
+              errorPercentage: 0,
+              compliancePercentage: 0,
+              isCompleted: false,
+              observations: [],
+            },
+          ],
+        },
+        {
+          id: 2,
+          taskCode: 'B',
+          procedureDescription: 'Temas Varios',
+          compliancePercentage: 0,
+          taskRating: '',
+          isCompleted: false,
+          subtasks: [
+            {
+              id: 201,
+              requerimentCode: 1,
+              procedureDescription:
+                'Los colaboradores conocen los procedimientos o instructivos que rigen la forma de operar de la tienda',
+              riskLevel: 'Alto',
+              auditedSamples: 0,
+              errorsFound: 0,
+              errorPercentage: 0,
+              compliancePercentage: 0,
+              isCompleted: false,
+              observations: [],
+            },
+            {
+              id: 202,
+              requerimentCode: 2,
+              procedureDescription:
+                'El libro de sugerencias, Felicitaciones y reclamos cumple con las normas y requisitos establecidos',
+              riskLevel: 'Alto',
+              auditedSamples: 0,
+              errorsFound: 0,
+              errorPercentage: 0,
+              compliancePercentage: 0,
+              isCompleted: false,
+              observations: [],
+            },
+          ],
+        },
+        {
+          id: 2,
+          taskCode: 'C',
+          procedureDescription: 'Seguimiento Visita Anterior',
+          compliancePercentage: 0,
+          taskRating: '',
+          isCompleted: false,
+          subtasks: [
+            {
+              id: 201,
+              requerimentCode: 1,
+              procedureDescription:
+                'Cuando aplique, valide si se repiten las mismas observaciones que la auditoría anterior',
+              riskLevel: 'Muy Alto',
+              auditedSamples: 0,
+              errorsFound: 0,
+              errorPercentage: 0,
+              compliancePercentage: 0,
+              isCompleted: false,
+              observations: [],
+            },
+          ],
+        },
       ]
     case 3: // TI Mantencion - Replicar estructura similar
       return [

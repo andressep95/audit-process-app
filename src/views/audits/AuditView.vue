@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <div class="px-6 py-1">
       <div
-        @click="mostrarFormulario = true"
+        @click="handleHeaderClick"
         class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
       >
         <div class="relative z-10">
@@ -26,7 +26,7 @@
                   </svg>
                 </div>
                 <h2 class="text-2xl font-bold tracking-tight text-gray-800">
-                  {{ auditHeaders.storeName || 'Proceso de Auditoria' }}
+                  {{ auditHeaders.storeName || 'Proceso de Auditoría' }}
                 </h2>
                 <span
                   class="px-2 py-1 border border-gray-200 text-gray-600 bg-white shadow-sm rounded text-sm"
@@ -51,7 +51,7 @@
                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  {{ auditHeaders.isCompleted ? 'Completado' : 'Incompleto' }}
+                  {{ auditHeaders.isCompleted ? 'Completada' : 'En progreso' }}
                 </span>
               </div>
               <p class="text-gray-500 text-base">
@@ -94,6 +94,27 @@
                   auditHeaders.isCompleted ? 'Completada' : 'En progreso'
                 }}</span>
               </div>
+
+              <button
+                v-if="!isAuditFinalized"
+                @click.stop="finalizarAuditoria"
+                :disabled="!allModulesCompleted"
+                class="ml-4 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                :class="{
+                  'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500':
+                    allModulesCompleted,
+                  'bg-gray-200 text-gray-500 cursor-not-allowed': !allModulesCompleted,
+                }"
+              >
+                Finalizar Auditoría
+              </button>
+              <button
+                v-else
+                @click.stop="editarAuditoria"
+                class="ml-4 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Editar Auditoría
+              </button>
             </div>
           </div>
 
@@ -223,8 +244,11 @@
         </div>
       </div>
       <div class="mt-4">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
-        <SubModuleCards :auditModules="calculatedAuditModules" @select-submodule="abrirSubModulo" />
+        <SubModuleCards
+          :auditModules="calculatedAuditModules"
+          @select-submodule="abrirSubModulo"
+          :class="{ 'pointer-events-none opacity-50': isAuditFinalized && !isEditingAudit }"
+        />
       </div>
 
       <component
@@ -246,19 +270,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent, toRaw, watch, computed } from 'vue' // Agregado 'computed'
+import { ref, onMounted, defineAsyncComponent, toRaw, watch, computed } from 'vue'
 import dayjs from 'dayjs'
 import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
-import type { AuditHeaders, AuditModules, AuditSubTask, Task } from '@/models/models'
+import type { AuditHeaders, AuditModules } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
-import { calculateModuleCompliance } from '@/utils/auditCalculations' // Importar la utilidad de cálculo
-import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers' // Importar la utilidad de inicialización de tareas
+import { calculateModuleCompliance } from '@/utils/auditCalculations'
+import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers'
 
 const mostrarFormulario = ref(false)
-
-// Clave para guardar el borrador general de la auditoría en localStorage
 const AUDIT_DRAFT_KEY = 'auditDraft'
+
+const isAuditFinalized = ref(false)
+const isEditingAudit = ref(false) // Nuevo estado para controlar si se está editando una auditoría finalizada
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
@@ -284,20 +309,19 @@ const auditHeaders = ref<AuditHeaders>({
   auditDate: dayjs().format('DD/MM/YYYY'),
   isCompleted: false,
   observations: '',
-  auditModules: [], // Se inicializará con la función `loadAuditModules`
+  auditModules: [],
 })
 
-// Propiedad computada que calculará el cumplimiento para cada módulo
-// Esto se re-evaluará cada vez que `auditHeaders.value.auditModules` cambie
 const calculatedAuditModules = computed(() => {
   if (!auditHeaders.value.auditModules || auditHeaders.value.auditModules.length === 0) return []
-
   return auditHeaders.value.auditModules.map((module) => {
-    // Es importante pasar una copia del módulo si no quieres que calculateModuleCompliance
-    // lo mute directamente antes de que Vue lo "vea" y active la reactividad correctamente.
-    // Sin embargo, calculateModuleCompliance ya muta y devuelve el mismo objeto, así que { ...module } está bien.
     return calculateModuleCompliance({ ...module })
   })
+})
+
+const allModulesCompleted = computed(() => {
+  if (!calculatedAuditModules.value.length) return false
+  return calculatedAuditModules.value.every((module) => module.isCompleted)
 })
 
 const cargarDesdeLocalStorage = () => {
@@ -307,7 +331,6 @@ const cargarDesdeLocalStorage = () => {
   if (draft) {
     try {
       const parsed = JSON.parse(draft)
-      // Asegurarse de que el objeto parseado tiene las propiedades necesarias
       if (!parsed || !parsed.auditDate || !parsed.auditModules) {
         throw new Error('Formato de borrador inválido o incompleto')
       }
@@ -320,27 +343,30 @@ const cargarDesdeLocalStorage = () => {
       if (draftISO === hoyISO) {
         parsed.auditorName = obtenerAuditorDesdeToken()
         auditHeaders.value = parsed
-        mostrarFormulario.value = false // Si hay un borrador de hoy, no mostrar el formulario inicial
+        // Si el borrador ya indica que está completado, establecemos isAuditFinalized a true
+        if (parsed.isCompleted) {
+          isAuditFinalized.value = true
+        }
+        mostrarFormulario.value = false
         console.log('Borrador de auditoría cargado desde localStorage:', parsed)
       } else {
         console.info('Borrador de auditoría con fecha antigua. Se elimina.')
         localStorage.removeItem(AUDIT_DRAFT_KEY)
-        initializeDefaultModules() // Inicializa módulos por defecto si el borrador es antiguo
-        mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
+        initializeDefaultModules()
+        mostrarFormulario.value = true
       }
     } catch (e) {
       console.error('Error al leer o parsear el borrador de auditoría:', e)
-      localStorage.removeItem(AUDIT_DRAFT_KEY) // Limpiar datos corruptos
-      initializeDefaultModules() // Inicializa módulos por defecto si hubo error
-      mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
+      localStorage.removeItem(AUDIT_DRAFT_KEY)
+      initializeDefaultModules()
+      mostrarFormulario.value = true
     }
   } else {
-    initializeDefaultModules() // Si no hay borrador, inicializa módulos por defecto
-    mostrarFormulario.value = true // Si no hay borrador, mostrar el formulario inicial
+    initializeDefaultModules()
+    mostrarFormulario.value = true
   }
 }
 
-// Nueva función para inicializar los módulos con sus tareas por defecto
 const initializeDefaultModules = () => {
   auditHeaders.value.auditModules = [
     {
@@ -349,7 +375,7 @@ const initializeDefaultModules = () => {
       compliancePercentage: 0,
       overallRating: '',
       isCompleted: false,
-      tasks: getInitialTasksForModule(1), // Usa la función para obtener tareas iniciales
+      tasks: getInitialTasksForModule(1),
     },
     {
       id: 2,
@@ -357,7 +383,7 @@ const initializeDefaultModules = () => {
       compliancePercentage: 0,
       overallRating: '',
       isCompleted: false,
-      tasks: getInitialTasksForModule(2), // Obtener tareas para Administración
+      tasks: getInitialTasksForModule(2),
     },
     {
       id: 3,
@@ -365,7 +391,7 @@ const initializeDefaultModules = () => {
       compliancePercentage: 0,
       overallRating: '',
       isCompleted: false,
-      tasks: getInitialTasksForModule(3), // Obtener tareas para TI Mantencion
+      tasks: getInitialTasksForModule(3),
     },
     {
       id: 4,
@@ -373,7 +399,7 @@ const initializeDefaultModules = () => {
       compliancePercentage: 0,
       overallRating: '',
       isCompleted: false,
-      tasks: getInitialTasksForModule(4), // Obtener tareas para RR.HH - SSO
+      tasks: getInitialTasksForModule(4),
     },
     {
       id: 5,
@@ -381,17 +407,16 @@ const initializeDefaultModules = () => {
       compliancePercentage: 0,
       overallRating: '',
       isCompleted: false,
-      tasks: getInitialTasksForModule(5), // Obtener tareas para Recaudacion
+      tasks: getInitialTasksForModule(5),
     },
   ]
 }
 
-// Watcher para guardar el auditHeaders completo en localStorage cada vez que cambie
 watch(
   auditHeaders,
   (newVal) => {
-    // Solo guardar si hay un storeName, lo que indica que el header ha sido inicializado/guardado
-    if (newVal && newVal.storeName !== '') {
+    // Solo guardar si no está en un estado finalizado sin edición activa
+    if (newVal && newVal.storeName !== '' && !(isAuditFinalized.value && !isEditingAudit.value)) {
       console.log('Guardando auditDraft completo en localStorage.')
       localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(newVal)))
     }
@@ -405,6 +430,9 @@ const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
   }
   auditHeaders.value = moduloGuardado
   mostrarFormulario.value = false
+  // Si estábamos editando, al guardar el header, la auditoría sigue en modo edición.
+  // Pero al cerrar el form de header, el estado general de finalización se mantiene.
+  console.log(JSON.stringify(toRaw(auditHeaders.value), null, 2))
 }
 
 const onFormularioCerrado = () => {
@@ -413,16 +441,28 @@ const onFormularioCerrado = () => {
 
 const subModuloSeleccionado = ref<AuditModules | null>(null)
 
+// Maneja el clic en el div de la cabecera (para abrir AuditHeaderForm)
+const handleHeaderClick = () => {
+  // Permite abrir el formulario de cabecera si NO está finalizada O si está en modo edición
+  if (!isAuditFinalized.value || isEditingAudit.value) {
+    mostrarFormulario.value = true
+  } else {
+    console.log('Auditoría finalizada. Presiona "Editar Auditoría" para modificarla.')
+  }
+}
+
 function abrirSubModulo(sub: AuditModules) {
-  // Cuando se abre un submódulo, pasamos una copia del módulo con las tareas ya inicializadas
-  // para que el formulario pueda trabajar con ellas.
+  // Evitar abrir submódulos si la auditoría está finalizada Y NO está en modo edición
+  if (isAuditFinalized.value && !isEditingAudit.value) {
+    console.warn('La auditoría está finalizada. Presiona "Editar Auditoría" para modificarla.')
+    return
+  }
+
   const moduleWithTasks = { ...sub, tasks: getInitialTasksForModule(sub.id) }
-  // Luego, fusionamos los datos del localStorage si existen para ese módulo
-  const storedData = localStorage.getItem(`auditModule_${sub.id}`)
+  const storedData = localStorage.getItem(`auditModule_${sub.id}`) // Considera si este guardado individual por módulo sigue siendo necesario.
+
   if (storedData) {
     const parsedStoredData = JSON.parse(storedData)
-    // Asegurarse de que las tareas del módulo cargado sobrescriban las iniciales
-    // pero manteniendo la estructura general del módulo.
     subModuloSeleccionado.value = {
       ...moduleWithTasks,
       ...parsedStoredData,
@@ -434,10 +474,8 @@ function abrirSubModulo(sub: AuditModules) {
   console.log('Abriendo submódulo:', toRaw(subModuloSeleccionado.value))
 }
 
-// Nueva función para manejar el cierre desde el formulario del submódulo
 function cerrarFormularioDeModulo() {
   subModuloSeleccionado.value = null
-  // El watcher de auditHeaders ya habrá guardado los cambios.
   console.log('Formulario de submódulo cerrado. auditHeaders debe estar guardado.')
 }
 
@@ -461,19 +499,108 @@ function getFormularioComponent(id: number) {
 function actualizarSubModulo(subModuloActualizado: AuditModules) {
   const index = auditHeaders.value.auditModules.findIndex((s) => s.id === subModuloActualizado.id)
   if (index !== -1) {
-    // Reemplaza el módulo existente en auditHeaders con el módulo actualizado
-    // Asegúrate de que el módulo actualizado pase por calculateModuleCompliance
     const calculatedModule = calculateModuleCompliance(toRaw(subModuloActualizado))
     auditHeaders.value.auditModules[index] = calculatedModule
     console.log(
       `Submódulo ${subModuloActualizado.moduleName} actualizado y recalculado en auditHeaders.`,
     )
   }
-  cerrarFormularioDeModulo() // Usa la nueva función de cierre
-  // El watcher de auditHeaders se encargará de guardar todo el objeto actualizado en localStorage
+  cerrarFormularioDeModulo()
+}
+
+const finalizarAuditoria = async () => {
+  if (!allModulesCompleted.value) {
+    alert('Por favor, complete todos los módulos antes de finalizar la auditoría.')
+    return
+  }
+
+  if (!confirm('¿Estás seguro de que quieres finalizar y enviar esta auditoría?')) {
+    return
+  }
+
+  console.log('Iniciando proceso de finalización y envío de auditoría...')
+  // Marcar la auditoría como completada en los headers
+  auditHeaders.value.isCompleted = true
+
+  try {
+    // Aquí iría la lógica para enviar `auditHeaders.value` al backend
+    // El backend debe manejar si es una creación nueva o una actualización
+    console.log('Enviando datos de la auditoría al backend:', toRaw(auditHeaders.value))
+    // await fetch('/api/audits', {
+    //   method: 'POST', // O 'PUT' si el backend puede diferenciarlo por ID, o 'POST' si el backend decide
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+    //   },
+    //   body: JSON.stringify(toRaw(auditHeaders.value))
+    // });
+    // console.log('Auditoría enviada exitosamente al backend.');
+
+    isAuditFinalized.value = true // La auditoría está finalizada (enviada y bloqueada para edición directa)
+    isEditingAudit.value = false // Asegurarse de que el modo edición está desactivado
+    // NO ELIMINAMOS DEL LOCALSTORAGE
+    console.log('Borrador de auditoría mantenido en localStorage (estado finalizado).')
+
+    alert('Auditoría finalizada y enviada con éxito.')
+  } catch (error) {
+    console.error('Error al enviar la auditoría:', error)
+    alert('Hubo un error al finalizar y enviar la auditoría. Por favor, inténtalo de nuevo.')
+    // Si falla el envío, revertir el estado de isCompleted y de finalización
+    auditHeaders.value.isCompleted = false
+    isAuditFinalized.value = false
+    isEditingAudit.value = false
+  }
+}
+
+// Nueva función para habilitar la edición de una auditoría finalizada
+const editarAuditoria = () => {
+  if (
+    confirm(
+      '¿Estás seguro de que quieres editar esta auditoría? Esto desbloqueará los formularios para su modificación.',
+    )
+  ) {
+    isAuditFinalized.value = false // Desbloqueamos el estado de finalizado
+    isEditingAudit.value = true // Entramos en modo edición
+    auditHeaders.value.isCompleted = false // Opcional: Si quieres que el estado visual cambie a "En progreso" al editar
+    console.log('Modo de edición activado. La auditoría puede ser modificada.')
+    alert('Modo de edición activado. Ya puedes modificar la auditoría.')
+  }
 }
 
 onMounted(() => {
   cargarDesdeLocalStorage()
 })
 </script>
+
+<style scoped>
+/* Estilos existentes */
+.modal-enter-active,
+.modal-leave-active {
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+.modal-enter-to,
+.modal-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-to,
+.modal-fade-leave-from {
+  opacity: 0.75;
+}
+</style>

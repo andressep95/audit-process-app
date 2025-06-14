@@ -39,9 +39,12 @@
           <div
             class="h-2 rounded-full"
             :class="{
-              'bg-green-500': module.compliancePercentage === 100,
-              'bg-gray-500': module.compliancePercentage > 0 && module.compliancePercentage < 100,
-              'bg-red-500': module.compliancePercentage === 0 && module.tasks.length > 0,
+              'bg-green-500': module.compliancePercentage >= 90,
+              'bg-yellow-500':
+                module.compliancePercentage >= 80 && module.compliancePercentage < 90,
+              'bg-orange-300':
+                module.compliancePercentage >= 70 && module.compliancePercentage < 80,
+              'bg-red-500': module.compliancePercentage < 70,
             }"
             :style="{ width: `${module.compliancePercentage}%` }"
           ></div>

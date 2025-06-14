@@ -180,6 +180,7 @@ const stateText = computed(() => {
 
 const guardarFormulario = () => {
   // Emitimos la copia interna del objeto, que ya tiene los cambios del formulario
+  console.log()
   emit('guardado', internalAuditHeaders.value)
 }
 
