@@ -3,35 +3,50 @@
     <div
       v-for="module in auditModules"
       :key="module.id"
-      class="bg-white rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)] hover:border-gray-200 cursor-pointer"
+      class="bg-white rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)] hover:border-gray-200 cursor-pointer relative"
       @click="$emit('select-submodule', module)"
     >
+      <div class="absolute top-3 right-3 z-20">
+        <span
+          class="px-3 py-1 text-xs font-semibold rounded-full flex items-center justify-center whitespace-nowrap transition-colors duration-200"
+          :class="{
+            'bg-green-100 text-green-700': module.isCompleted,
+            'bg-red-100 text-red-700': !module.isCompleted,
+          }"
+        >
+          {{ module.isCompleted ? 'Completado' : 'Pendiente' }}
+        </span>
+      </div>
+
       <div class="p-5">
-        <!-- Nombre del módulo -->
         <h3 class="text-lg font-semibold text-gray-800 mb-2">
           {{ module.moduleName }}
         </h3>
 
-        <!-- Cantidad de tareas -->
         <p
-          class="text-sm bg-blue-50 text-blue-600 rounded-full mb-3 inline-flex items-center px-3 py-1"
+          class="text-sm bg-gray-50 text-gray-600 rounded-full mb-3 inline-flex items-center px-3 py-1"
         >
           {{ module.tasks.length }} {{ module.tasks.length === 1 ? 'tarea' : 'tareas' }}
         </p>
 
-        <!-- Cumplimiento y barra de progreso -->
         <div class="flex items-center justify-between text-sm text-gray-500 mb-1">
           <span>Cumplimiento</span>
-          <span class="font-medium text-gray-700"> {{ module.compliancePercentage }}% </span>
+          <span class="font-medium text-gray-700">
+            {{ module.compliancePercentage.toFixed(0) }}%
+          </span>
         </div>
         <div class="w-full bg-gray-100 rounded-full h-2 mb-3">
           <div
-            class="bg-blue-500 h-2 rounded-full"
+            class="h-2 rounded-full"
+            :class="{
+              'bg-green-500': module.compliancePercentage === 100,
+              'bg-gray-500': module.compliancePercentage > 0 && module.compliancePercentage < 100,
+              'bg-red-500': module.compliancePercentage === 0 && module.tasks.length > 0,
+            }"
             :style="{ width: `${module.compliancePercentage}%` }"
           ></div>
         </div>
 
-        <!-- Calificación general -->
         <div class="flex items-center justify-between text-sm text-gray-500">
           <span>Calificación</span>
           <span class="font-medium text-gray-700">
@@ -42,12 +57,13 @@
     </div>
   </div>
 
-  <div v-if="!auditModules?.length" class="text-gray-500 italic mt-6">
+  <div v-if="!auditModules?.length" class="text-gray-500 italic mt-6 text-center">
     No hay módulos disponibles.
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue' // 'ref' se mantiene por si lo usas en otros lados del script
 import type { AuditModules } from '@/models/models'
 
 defineProps<{
@@ -57,6 +73,15 @@ defineProps<{
 defineEmits<{
   (e: 'select-submodule', module: AuditModules): void
 }>()
+
+// Eliminamos hoveredModuleId y las funciones showTooltip/hideTooltip
+// const hoveredModuleId = ref<number | null>(null)
+// const showTooltip = (id: number) => {
+//   hoveredModuleId.value = id
+// }
+// const hideTooltip = () => {
+//   hoveredModuleId.value = null
+// }
 </script>
 
 <style scoped>

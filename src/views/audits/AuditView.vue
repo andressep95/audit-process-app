@@ -224,10 +224,7 @@
       </div>
       <div class="mt-4">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Modulos</h2>
-        <SubModuleCards
-          :auditModules="auditHeaders.auditModules"
-          @select-submodule="abrirSubModulo"
-        />
+        <SubModuleCards :auditModules="calculatedAuditModules" @select-submodule="abrirSubModulo" />
       </div>
 
       <component
@@ -249,12 +246,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent, toRaw, watch } from 'vue' // Agregado 'watch'
+import { ref, onMounted, defineAsyncComponent, toRaw, watch, computed } from 'vue' // Agregado 'computed'
 import dayjs from 'dayjs'
 import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
 import type { AuditHeaders, AuditModules, AuditSubTask, Task } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
+import { calculateModuleCompliance } from '@/utils/auditCalculations' // Importar la utilidad de cálculo
+import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers' // Importar la utilidad de inicialización de tareas
 
 const mostrarFormulario = ref(false)
 
@@ -285,48 +284,20 @@ const auditHeaders = ref<AuditHeaders>({
   auditDate: dayjs().format('DD/MM/YYYY'),
   isCompleted: false,
   observations: '',
-  auditModules: [
-    {
-      id: 1,
-      moduleName: 'Existencia',
-      compliancePercentage: 0,
-      overallRating: '',
-      isCompleted: false,
-      tasks: [],
-    },
-    {
-      id: 2,
-      moduleName: 'Administracion',
-      compliancePercentage: 0,
-      overallRating: '',
-      isCompleted: false,
-      tasks: [],
-    },
-    {
-      id: 3,
-      moduleName: 'TI Mantencion',
-      compliancePercentage: 0,
-      overallRating: '',
-      isCompleted: false,
-      tasks: [],
-    },
-    {
-      id: 4,
-      moduleName: 'RR.HH - SSO',
-      compliancePercentage: 0,
-      overallRating: '',
-      isCompleted: false,
-      tasks: [],
-    },
-    {
-      id: 5,
-      moduleName: 'Recaudacion',
-      compliancePercentage: 0,
-      overallRating: '',
-      isCompleted: false,
-      tasks: [],
-    },
-  ],
+  auditModules: [], // Se inicializará con la función `loadAuditModules`
+})
+
+// Propiedad computada que calculará el cumplimiento para cada módulo
+// Esto se re-evaluará cada vez que `auditHeaders.value.auditModules` cambie
+const calculatedAuditModules = computed(() => {
+  if (!auditHeaders.value.auditModules || auditHeaders.value.auditModules.length === 0) return []
+
+  return auditHeaders.value.auditModules.map((module) => {
+    // Es importante pasar una copia del módulo si no quieres que calculateModuleCompliance
+    // lo mute directamente antes de que Vue lo "vea" y active la reactividad correctamente.
+    // Sin embargo, calculateModuleCompliance ya muta y devuelve el mismo objeto, así que { ...module } está bien.
+    return calculateModuleCompliance({ ...module })
+  })
 })
 
 const cargarDesdeLocalStorage = () => {
@@ -354,30 +325,75 @@ const cargarDesdeLocalStorage = () => {
       } else {
         console.info('Borrador de auditoría con fecha antigua. Se elimina.')
         localStorage.removeItem(AUDIT_DRAFT_KEY)
+        initializeDefaultModules() // Inicializa módulos por defecto si el borrador es antiguo
         mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
       }
     } catch (e) {
       console.error('Error al leer o parsear el borrador de auditoría:', e)
       localStorage.removeItem(AUDIT_DRAFT_KEY) // Limpiar datos corruptos
+      initializeDefaultModules() // Inicializa módulos por defecto si hubo error
       mostrarFormulario.value = true // Mostrar el formulario para iniciar una nueva auditoría
     }
   } else {
+    initializeDefaultModules() // Si no hay borrador, inicializa módulos por defecto
     mostrarFormulario.value = true // Si no hay borrador, mostrar el formulario inicial
   }
+}
+
+// Nueva función para inicializar los módulos con sus tareas por defecto
+const initializeDefaultModules = () => {
+  auditHeaders.value.auditModules = [
+    {
+      id: 1,
+      moduleName: 'Existencia',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: getInitialTasksForModule(1), // Usa la función para obtener tareas iniciales
+    },
+    {
+      id: 2,
+      moduleName: 'Administracion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: getInitialTasksForModule(2), // Obtener tareas para Administración
+    },
+    {
+      id: 3,
+      moduleName: 'TI Mantencion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: getInitialTasksForModule(3), // Obtener tareas para TI Mantencion
+    },
+    {
+      id: 4,
+      moduleName: 'RR.HH - SSO',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: getInitialTasksForModule(4), // Obtener tareas para RR.HH - SSO
+    },
+    {
+      id: 5,
+      moduleName: 'Recaudacion',
+      compliancePercentage: 0,
+      overallRating: '',
+      isCompleted: false,
+      tasks: getInitialTasksForModule(5), // Obtener tareas para Recaudacion
+    },
+  ]
 }
 
 // Watcher para guardar el auditHeaders completo en localStorage cada vez que cambie
 watch(
   auditHeaders,
   (newVal) => {
-    // Evitar guardar si aún no está completamente inicializado o si es un cambio menor durante la carga inicial
+    // Solo guardar si hay un storeName, lo que indica que el header ha sido inicializado/guardado
     if (newVal && newVal.storeName !== '') {
-      console.log(
-        'Guardando auditDraft completo en localStorage:',
-        JSON.stringify(toRaw(newVal), null, 2),
-      )
+      console.log('Guardando auditDraft completo en localStorage.')
       localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(newVal)))
-      console.log('auditHeaders guardado automáticamente en localStorage.')
     }
   },
   { deep: true },
@@ -389,9 +405,6 @@ const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
   }
   auditHeaders.value = moduloGuardado
   mostrarFormulario.value = false
-  // El watcher de auditHeaders ya se encarga de guardar, pero puedes dejar esta línea
-  // como una "seguridad" adicional para cuando se guarda explícitamente el header.
-  // localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(moduloGuardado)));
 }
 
 const onFormularioCerrado = () => {
@@ -401,10 +414,24 @@ const onFormularioCerrado = () => {
 const subModuloSeleccionado = ref<AuditModules | null>(null)
 
 function abrirSubModulo(sub: AuditModules) {
-  // Asegurarse de que el subModuloSeleccionado es una copia profunda o raw
-  // para que el componente hijo no modifique directamente el auditHeaders.auditModules
-  subModuloSeleccionado.value = sub
-  console.log('Abriendo submódulo:', subModuloSeleccionado.value)
+  // Cuando se abre un submódulo, pasamos una copia del módulo con las tareas ya inicializadas
+  // para que el formulario pueda trabajar con ellas.
+  const moduleWithTasks = { ...sub, tasks: getInitialTasksForModule(sub.id) }
+  // Luego, fusionamos los datos del localStorage si existen para ese módulo
+  const storedData = localStorage.getItem(`auditModule_${sub.id}`)
+  if (storedData) {
+    const parsedStoredData = JSON.parse(storedData)
+    // Asegurarse de que las tareas del módulo cargado sobrescriban las iniciales
+    // pero manteniendo la estructura general del módulo.
+    subModuloSeleccionado.value = {
+      ...moduleWithTasks,
+      ...parsedStoredData,
+      tasks: parsedStoredData.tasks,
+    }
+  } else {
+    subModuloSeleccionado.value = moduleWithTasks
+  }
+  console.log('Abriendo submódulo:', toRaw(subModuloSeleccionado.value))
 }
 
 // Nueva función para manejar el cierre desde el formulario del submódulo
@@ -435,33 +462,15 @@ function actualizarSubModulo(subModuloActualizado: AuditModules) {
   const index = auditHeaders.value.auditModules.findIndex((s) => s.id === subModuloActualizado.id)
   if (index !== -1) {
     // Reemplaza el módulo existente en auditHeaders con el módulo actualizado
-    auditHeaders.value.auditModules[index] = toRaw(subModuloActualizado)
-    console.log(`Submódulo ${subModuloActualizado.moduleName} actualizado en auditHeaders.`)
+    // Asegúrate de que el módulo actualizado pase por calculateModuleCompliance
+    const calculatedModule = calculateModuleCompliance(toRaw(subModuloActualizado))
+    auditHeaders.value.auditModules[index] = calculatedModule
+    console.log(
+      `Submódulo ${subModuloActualizado.moduleName} actualizado y recalculado en auditHeaders.`,
+    )
   }
   cerrarFormularioDeModulo() // Usa la nueva función de cierre
   // El watcher de auditHeaders se encargará de guardar todo el objeto actualizado en localStorage
-}
-
-// Función auxiliar para realizar una copia profunda de un AuditModules (si es necesario)
-// Esto evita que el componente hijo modifique el objeto original reactivo
-const deepCopyAuditModule = (sourceModule: AuditModules): AuditModules => {
-  const copiedModule: AuditModules = {
-    ...sourceModule,
-    tasks: sourceModule.tasks.map((task) => {
-      const copiedTask: Task = {
-        ...task,
-        subtasks: task.subtasks.map((subtask) => {
-          const copiedSubtask: AuditSubTask = {
-            ...subtask,
-            observations: subtask.observations.map((obs) => ({ ...obs })),
-          }
-          return copiedSubtask
-        }),
-      }
-      return copiedTask
-    }),
-  }
-  return copiedModule
 }
 
 onMounted(() => {
