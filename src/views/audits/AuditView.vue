@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <div class="px-6 py-1">
+    <div class="px-6">
       <div
         @click="handleHeaderClick"
         class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
@@ -526,6 +526,7 @@ const finalizarAuditoria = async () => {
     // Aquí iría la lógica para enviar `auditHeaders.value` al backend
     // El backend debe manejar si es una creación nueva o una actualización
     console.log('Enviando datos de la auditoría al backend:', toRaw(auditHeaders.value))
+    console.log(JSON.stringify(toRaw(auditHeaders.value), null, 2))
     // await fetch('/api/audits', {
     //   method: 'POST', // O 'PUT' si el backend puede diferenciarlo por ID, o 'POST' si el backend decide
     //   headers: {

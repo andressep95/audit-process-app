@@ -2,10 +2,10 @@
   <div class="h-screen flex flex-col bg-gray-50 overflow-hidden relative">
     <div
       :class="{ 'opacity-40 pointer-events-none': showAuditModal }"
-      class="flex flex-1 overflow-hidden"
+      class="flex flex-1 overflow-hidden py-2"
     >
       <AppSidebar class="h-full overflow-hidden flex flex-col" />
-      <main class="flex-1 overflow-hidden px-4 py-1 flex flex-col">
+      <main class="flex-1 overflow-hidden px-4 flex flex-col">
         <router-view v-slot="{ Component, route }" class="flex-1 overflow-hidden">
           <transition :name="route.meta.transition || 'fade'" mode="out-in" appear>
             <component :is="Component" :key="route.path" class="flex-1 overflow-hidden" />
@@ -61,7 +61,7 @@ onMounted(() => {
   const storedDate = localStorage.getItem('auditAcceptedDate')
   const today = getTodayDate()
 
-  if (authStore.hasRole('ADMIN') && !draft) {
+  if ((authStore.hasRole('ADMIN') || authStore.hasRole('USER')) && !draft) {
     if (storedDate !== today) {
       localStorage.removeItem('auditAccepted')
       localStorage.removeItem('auditAcceptedDate')
