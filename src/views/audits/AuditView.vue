@@ -276,14 +276,14 @@ import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
 import type { AuditHeaders, AuditModules } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
-import { calculateModuleCompliance } from '@/utils/auditCalculations'
+import { calculateModuleCompliance, calculateAuditTotalCompliance } from '@/utils/auditCalculations' // Importa la nueva función
 import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers'
 
 const mostrarFormulario = ref(false)
 const AUDIT_DRAFT_KEY = 'auditDraft'
 
 const isAuditFinalized = ref(false)
-const isEditingAudit = ref(false) // Nuevo estado para controlar si se está editando una auditoría finalizada
+const isEditingAudit = ref(false)
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
@@ -310,6 +310,9 @@ const auditHeaders = ref<AuditHeaders>({
   isCompleted: false,
   observations: '',
   auditModules: [],
+  // --- Inicializar las nuevas propiedades ---
+  compliancePercentage: 0,
+  overallRating: '',
 })
 
 const calculatedAuditModules = computed(() => {
@@ -323,6 +326,17 @@ const allModulesCompleted = computed(() => {
   if (!calculatedAuditModules.value.length) return false
   return calculatedAuditModules.value.every((module) => module.isCompleted)
 })
+
+// --- Nuevo watcher para calcular el compliance y rating total de la auditoría ---
+watch(
+  calculatedAuditModules,
+  (newModules) => {
+    const { compliancePercentage, overallRating } = calculateAuditTotalCompliance(newModules)
+    auditHeaders.value.compliancePercentage = compliancePercentage
+    auditHeaders.value.overallRating = overallRating
+  },
+  { deep: true, immediate: true }, // 'immediate' para que se ejecute en la carga inicial
+)
 
 const cargarDesdeLocalStorage = () => {
   const draft = localStorage.getItem(AUDIT_DRAFT_KEY)
@@ -343,7 +357,6 @@ const cargarDesdeLocalStorage = () => {
       if (draftISO === hoyISO) {
         parsed.auditorName = obtenerAuditorDesdeToken()
         auditHeaders.value = parsed
-        // Si el borrador ya indica que está completado, establecemos isAuditFinalized a true
         if (parsed.isCompleted) {
           isAuditFinalized.value = true
         }
@@ -415,7 +428,6 @@ const initializeDefaultModules = () => {
 watch(
   auditHeaders,
   (newVal) => {
-    // Solo guardar si no está en un estado finalizado sin edición activa
     if (newVal && newVal.storeName !== '' && !(isAuditFinalized.value && !isEditingAudit.value)) {
       console.log('Guardando auditDraft completo en localStorage.')
       localStorage.setItem(AUDIT_DRAFT_KEY, JSON.stringify(toRaw(newVal)))
@@ -430,9 +442,9 @@ const onFormularioGuardado = (moduloGuardado: AuditHeaders) => {
   }
   auditHeaders.value = moduloGuardado
   mostrarFormulario.value = false
-  // Si estábamos editando, al guardar el header, la auditoría sigue en modo edición.
-  // Pero al cerrar el form de header, el estado general de finalización se mantiene.
+  console.log('--- Audit Headers guardados (JSON) ---')
   console.log(JSON.stringify(toRaw(auditHeaders.value), null, 2))
+  console.log('-------------------------------------')
 }
 
 const onFormularioCerrado = () => {
@@ -441,9 +453,7 @@ const onFormularioCerrado = () => {
 
 const subModuloSeleccionado = ref<AuditModules | null>(null)
 
-// Maneja el clic en el div de la cabecera (para abrir AuditHeaderForm)
 const handleHeaderClick = () => {
-  // Permite abrir el formulario de cabecera si NO está finalizada O si está en modo edición
   if (!isAuditFinalized.value || isEditingAudit.value) {
     mostrarFormulario.value = true
   } else {
@@ -452,14 +462,13 @@ const handleHeaderClick = () => {
 }
 
 function abrirSubModulo(sub: AuditModules) {
-  // Evitar abrir submódulos si la auditoría está finalizada Y NO está en modo edición
   if (isAuditFinalized.value && !isEditingAudit.value) {
     console.warn('La auditoría está finalizada. Presiona "Editar Auditoría" para modificarla.')
     return
   }
 
   const moduleWithTasks = { ...sub, tasks: getInitialTasksForModule(sub.id) }
-  const storedData = localStorage.getItem(`auditModule_${sub.id}`) // Considera si este guardado individual por módulo sigue siendo necesario.
+  const storedData = localStorage.getItem(`auditModule_${sub.id}`)
 
   if (storedData) {
     const parsedStoredData = JSON.parse(storedData)
@@ -519,50 +528,44 @@ const finalizarAuditoria = async () => {
   }
 
   console.log('Iniciando proceso de finalización y envío de auditoría...')
-  // Marcar la auditoría como completada en los headers
   auditHeaders.value.isCompleted = true
 
   try {
-    // Aquí iría la lógica para enviar `auditHeaders.value` al backend
-    // El backend debe manejar si es una creación nueva o una actualización
-    console.log('Enviando datos de la auditoría al backend:', toRaw(auditHeaders.value))
-    console.log(JSON.stringify(toRaw(auditHeaders.value), null, 2))
+    const auditDataJson = JSON.stringify(toRaw(auditHeaders.value), null, 2)
+    console.log(auditDataJson)
+
     // await fetch('/api/audits', {
-    //   method: 'POST', // O 'PUT' si el backend puede diferenciarlo por ID, o 'POST' si el backend decide
+    //   method: 'POST',
     //   headers: {
     //     'Content-Type': 'application/json',
     //     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
     //   },
-    //   body: JSON.stringify(toRaw(auditHeaders.value))
+    //   body: auditDataJson
     // });
-    // console.log('Auditoría enviada exitosamente al backend.');
 
-    isAuditFinalized.value = true // La auditoría está finalizada (enviada y bloqueada para edición directa)
-    isEditingAudit.value = false // Asegurarse de que el modo edición está desactivado
-    // NO ELIMINAMOS DEL LOCALSTORAGE
+    isAuditFinalized.value = true
+    isEditingAudit.value = false
     console.log('Borrador de auditoría mantenido en localStorage (estado finalizado).')
 
     alert('Auditoría finalizada y enviada con éxito.')
   } catch (error) {
     console.error('Error al enviar la auditoría:', error)
     alert('Hubo un error al finalizar y enviar la auditoría. Por favor, inténtalo de nuevo.')
-    // Si falla el envío, revertir el estado de isCompleted y de finalización
     auditHeaders.value.isCompleted = false
     isAuditFinalized.value = false
     isEditingAudit.value = false
   }
 }
 
-// Nueva función para habilitar la edición de una auditoría finalizada
 const editarAuditoria = () => {
   if (
     confirm(
       '¿Estás seguro de que quieres editar esta auditoría? Esto desbloqueará los formularios para su modificación.',
     )
   ) {
-    isAuditFinalized.value = false // Desbloqueamos el estado de finalizado
-    isEditingAudit.value = true // Entramos en modo edición
-    auditHeaders.value.isCompleted = false // Opcional: Si quieres que el estado visual cambie a "En progreso" al editar
+    isAuditFinalized.value = false
+    isEditingAudit.value = true
+    auditHeaders.value.isCompleted = false
     console.log('Modo de edición activado. La auditoría puede ser modificada.')
     alert('Modo de edición activado. Ya puedes modificar la auditoría.')
   }

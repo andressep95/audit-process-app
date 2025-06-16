@@ -8,6 +8,9 @@ export interface AuditHeaders {
   isCompleted: boolean // estado actual de auditoria
   observations: string // observaciones generales de la auditoria
   auditModules: AuditModules[]
+  // --- Nuevas propiedades ---
+  compliancePercentage: number // Porcentaje de cumplimiento total de la auditoría
+  overallRating: string // Calificación textual total de la auditoría
 }
 
 export interface AuditModules {
