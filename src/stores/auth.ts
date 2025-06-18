@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import apiClient from '@/services/api'
+import apiClient from '@/services/Api'
 import router from '@/router/index'
 import { decodeJWT } from '@/utils/jwt'
 

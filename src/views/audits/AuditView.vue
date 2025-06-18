@@ -274,13 +274,15 @@ import { ref, onMounted, defineAsyncComponent, toRaw, watch, computed } from 'vu
 import dayjs from 'dayjs'
 import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
+import AuditService from '@/services/AuditService'
 import type { AuditHeaders, AuditModules } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
-import { calculateModuleCompliance, calculateAuditTotalCompliance } from '@/utils/auditCalculations' // Importa la nueva función
+import { calculateModuleCompliance, calculateAuditTotalCompliance } from '@/utils/auditCalculations'
 import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers'
 
 const mostrarFormulario = ref(false)
 const AUDIT_DRAFT_KEY = 'auditDraft'
+const MODULE_PREFIX = 'auditModule_' // <-- Nueva constante para los prefijos de los módulos
 
 const isAuditFinalized = ref(false)
 const isEditingAudit = ref(false)
@@ -310,7 +312,6 @@ const auditHeaders = ref<AuditHeaders>({
   isCompleted: false,
   observations: '',
   auditModules: [],
-  // --- Inicializar las nuevas propiedades ---
   compliancePercentage: 0,
   overallRating: '',
 })
@@ -327,7 +328,6 @@ const allModulesCompleted = computed(() => {
   return calculatedAuditModules.value.every((module) => module.isCompleted)
 })
 
-// --- Nuevo watcher para calcular el compliance y rating total de la auditoría ---
 watch(
   calculatedAuditModules,
   (newModules) => {
@@ -335,8 +335,21 @@ watch(
     auditHeaders.value.compliancePercentage = compliancePercentage
     auditHeaders.value.overallRating = overallRating
   },
-  { deep: true, immediate: true }, // 'immediate' para que se ejecute en la carga inicial
+  { deep: true, immediate: true },
 )
+
+// --- Función para limpiar todos los borradores de localStorage ---
+const clearAllAuditDrafts = () => {
+  console.info('Limpiando todos los borradores de auditoría del localStorage.')
+  localStorage.removeItem(AUDIT_DRAFT_KEY)
+  // Iterar sobre todas las claves en localStorage y eliminar las que corresponden a módulos
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+    if (key && key.startsWith(MODULE_PREFIX)) {
+      localStorage.removeItem(key)
+    }
+  }
+}
 
 const cargarDesdeLocalStorage = () => {
   const draft = localStorage.getItem(AUDIT_DRAFT_KEY)
@@ -355,6 +368,7 @@ const cargarDesdeLocalStorage = () => {
       const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
       if (draftISO === hoyISO) {
+        // Si la fecha coincide, carga el borrador
         parsed.auditorName = obtenerAuditorDesdeToken()
         auditHeaders.value = parsed
         if (parsed.isCompleted) {
@@ -363,18 +377,23 @@ const cargarDesdeLocalStorage = () => {
         mostrarFormulario.value = false
         console.log('Borrador de auditoría cargado desde localStorage:', parsed)
       } else {
-        console.info('Borrador de auditoría con fecha antigua. Se elimina.')
-        localStorage.removeItem(AUDIT_DRAFT_KEY)
+        // Si la fecha no coincide, es un borrador antiguo, lo elimina todo
+        console.info('Borrador de auditoría con fecha antigua. Se procede a limpiar y reiniciar.')
+        clearAllAuditDrafts() // <-- Limpia también los módulos asociados
         initializeDefaultModules()
         mostrarFormulario.value = true
       }
     } catch (e) {
       console.error('Error al leer o parsear el borrador de auditoría:', e)
-      localStorage.removeItem(AUDIT_DRAFT_KEY)
+      // Si hay un error en el borrador principal, lo limpia y reinicia
+      clearAllAuditDrafts() // <-- Limpia también los módulos asociados
       initializeDefaultModules()
       mostrarFormulario.value = true
     }
   } else {
+    // Si no hay borrador, inicializa módulos por defecto (y asegura que no haya módulos huérfanos)
+    console.info('No se encontró borrador de auditoría. Inicializando auditoría nueva.')
+    clearAllAuditDrafts() // Asegura una limpieza completa al no encontrar borrador
     initializeDefaultModules()
     mostrarFormulario.value = true
   }
@@ -468,7 +487,7 @@ function abrirSubModulo(sub: AuditModules) {
   }
 
   const moduleWithTasks = { ...sub, tasks: getInitialTasksForModule(sub.id) }
-  const storedData = localStorage.getItem(`auditModule_${sub.id}`)
+  const storedData = localStorage.getItem(`${MODULE_PREFIX}${sub.id}`) // <-- Usar la nueva constante
 
   if (storedData) {
     const parsedStoredData = JSON.parse(storedData)
@@ -531,21 +550,13 @@ const finalizarAuditoria = async () => {
   auditHeaders.value.isCompleted = true
 
   try {
-    const auditDataJson = JSON.stringify(toRaw(auditHeaders.value), null, 2)
-    console.log(auditDataJson)
-
-    // await fetch('/api/audits', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-    //   },
-    //   body: auditDataJson
-    // });
+    const auditData = toRaw(auditHeaders.value)
+    const response = await AuditService.createAudit(auditData)
+    console.log('Respuesta del servidor:', response)
 
     isAuditFinalized.value = true
     isEditingAudit.value = false
-    console.log('Borrador de auditoría mantenido en localStorage (estado finalizado).')
+    console.log('Auditoría enviada exitosamente. Borradores de localStorage limpiados.')
 
     alert('Auditoría finalizada y enviada con éxito.')
   } catch (error) {

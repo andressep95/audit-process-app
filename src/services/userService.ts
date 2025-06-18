@@ -1,5 +1,5 @@
 // src/services/UserService.ts
-import apiClient from '@/services/api'
+import apiClient from '@/services/Api'
 import type { User, UserInput } from '@/models/User'
 
 const UserService = {

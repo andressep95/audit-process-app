@@ -244,12 +244,13 @@ const modalContent = ref<HTMLElement | null>(null)
 const showIncompleteTasksWarningModal = ref(false)
 const showObservationModal = ref(false)
 
+const MODULE_PREFIX = 'auditModule_' // <-- ¡Asegúrate de que esta constante sea la misma!
+
 const currentTask = computed<Task | undefined>(() => {
   return currentSubModulo.value?.tasks[currentTaskIndex.value]
 })
 
 const currentSubtask = computed<AuditSubTask | undefined>(() => {
-  // Verificamos currentTask antes de acceder a subtasks
   return currentTask.value?.subtasks[currentSubtaskIndex.value]
 })
 
@@ -275,12 +276,12 @@ const canGoPrevTask = computed(() => {
 })
 
 const saveToLocalStorage = (module: AuditModules) => {
-  localStorage.setItem(`auditModule_${module.id}`, JSON.stringify(toRaw(module)))
+  localStorage.setItem(`${MODULE_PREFIX}${module.id}`, JSON.stringify(toRaw(module))) // <-- Usar la constante
   console.log(`Módulo ${module.moduleName} guardado en localStorage.`)
 }
 
 const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
-  const stored = localStorage.getItem(`auditModule_${moduleId}`)
+  const stored = localStorage.getItem(`${MODULE_PREFIX}${moduleId}`) // <-- Usar la constante
   if (stored) {
     try {
       const parsed = JSON.parse(stored)
@@ -290,7 +291,7 @@ const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
       throw new Error('Datos de módulo inválidos en localStorage.')
     } catch (e) {
       console.error(`Error al cargar o parsear módulo ${moduleId} de localStorage:`, e)
-      localStorage.removeItem(`auditModule_${moduleId}`)
+      localStorage.removeItem(`${MODULE_PREFIX}${moduleId}`) // <-- Usar la constante al limpiar
       return null
     }
   }
@@ -299,10 +300,8 @@ const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
 
 const initializeObservations = (subtask: AuditSubTask) => {
   if (!subtask.observations || subtask.observations.length === 0) {
-    // Si no hay observaciones, inicializamos un array con un objeto de observación vacío
     subtask.observations = [{ id: 1, observationText: '', imageUrl: '' }]
   } else {
-    // Si hay observaciones pero la primera no es válida o no tiene el campo, asegúrate de que esté correcto
     if (!subtask.observations[0] || subtask.observations[0].observationText === undefined) {
       subtask.observations[0] = { id: 1, observationText: '', imageUrl: '' }
     }
@@ -311,7 +310,6 @@ const initializeObservations = (subtask: AuditSubTask) => {
 
 const openObservationModal = () => {
   if (currentSubtask.value) {
-    // Asegura que el objeto de observación exista antes de abrir el modal
     initializeObservations(currentSubtask.value)
     showObservationModal.value = true
   }
