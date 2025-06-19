@@ -2,13 +2,11 @@
   <aside
     class="bg-white shadow-sm border-r border-gray-200 flex flex-col transition-all rounded-xl w-16 hover:w-48 h-full"
   >
-    <!-- Header -->
     <div class="flex items-center px-4 py-4 min-h-[4rem] flex-shrink-0">
       <img :src="logoPath" alt="CasaIdeas Logo" class="w-8 h-8 flex-shrink-0 object-contain" />
       <h2 class="sidebar-text text-lg font-semibold text-gray-900 select-none ml-2">CasaIdeas</h2>
     </div>
 
-    <!-- Menú con scroll interno si es necesario -->
     <div class="flex-1 overflow-y-auto">
       <nav class="px-1">
         <ul class="space-y-1">
@@ -28,7 +26,6 @@
       </nav>
     </div>
 
-    <!-- Botón de logout (fijo) -->
     <div class="px-1 pb-4 flex-shrink-0">
       <button
         @click="showLogoutModal = true"
@@ -69,7 +66,7 @@
 
 <script setup>
 import { ref, h, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/auth' // Asegúrate de que esta ruta sea correcta
 import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 import logo from '@/assets/img/CasaIdeas-logo.webp'
 
@@ -95,10 +92,6 @@ const createIcon = (pathData) => {
   }
 }
 
-const isAdmin = computed(() => {
-  return auth.isAdmin() || auth.hasRole('ADMIN')
-})
-
 const menuItems = [
   {
     path: '/admin/users',
@@ -106,7 +99,7 @@ const menuItems = [
     icon: createIcon(
       'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z',
     ),
-    requiresAdmin: true,
+    requiresRoles: ['ADMIN'], // Ahora usa 'requiresRoles'
   },
   {
     path: '/dashboard',
@@ -117,6 +110,7 @@ const menuItems = [
     path: '/audits',
     title: 'Auditar',
     icon: createIcon('M4 6h16M4 10h16M4 14h16M4 18h16'),
+    requiresRoles: ['ADMIN', 'AUDITOR'], // **Clave: solo ADMIN y AUDITOR**
   },
   {
     path: '/team',
@@ -144,9 +138,11 @@ const menuItems = [
 
 const visibleMenuItems = computed(() => {
   return menuItems.filter((item) => {
-    if (item.requiresAdmin) {
-      return isAdmin.value
+    // Si el ítem tiene 'requiresRoles', verifica si el usuario tiene alguno de ellos
+    if (item.requiresRoles) {
+      return auth.hasAnyRole(item.requiresRoles)
     }
+    // Si no tiene 'requiresRoles', siempre es visible
     return true
   })
 })

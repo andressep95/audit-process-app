@@ -126,10 +126,10 @@
                     <span
                       v-for="role in filteredRoles(user.roles)"
                       :key="role"
-                      :class="getRoleClass(role)"
+                      :class="getRoleClass(role).class"
                       class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                     >
-                      {{ role }}
+                      {{ getRoleClass(role).formattedName }}
                     </span>
                   </div>
                 </td>
@@ -373,8 +373,24 @@ const getRoleClass = (role) => {
     ADMIN: 'text-purple-800 bg-purple-100',
     MODERATOR: 'text-blue-800 bg-blue-100',
     USER: 'text-gray-800 bg-gray-100',
+    JEFE_TIENDA: 'text-green-800 bg-green-100', // Ejemplo: si tienes un estilo específico para este rol
+    // Agrega más roles si es necesario, manteniendo el guion bajo aquí si así viene del backend
   }
-  return classes[role] || 'text-gray-800 bg-gray-100'
+
+  // Primero, obtenemos la clase CSS según el rol original (con guion bajo si aplica)
+  const roleClass = classes[role] || 'text-gray-800 bg-gray-100'
+
+  // Luego, creamos una función auxiliar para formatear el texto del rol
+  const formatRoleName = (roleName) => {
+    // Reemplaza todos los guiones bajos por espacios
+    return roleName.replace(/_/g, ' ')
+  }
+
+  // Devolvemos un objeto con la clase CSS y el nombre formateado
+  return {
+    class: roleClass,
+    formattedName: formatRoleName(role),
+  }
 }
 
 const handlePageChange = (page) => {

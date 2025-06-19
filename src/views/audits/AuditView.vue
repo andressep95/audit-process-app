@@ -296,7 +296,7 @@ function obtenerAuditorDesdeToken(): string {
 
   try {
     const decoded = decodeJWT(token)
-    return decoded?.preferred_username ?? decoded?.name ?? 'Auditor Desconocido'
+    return decoded?.name ?? decoded?.preferred_username ?? 'Auditor Desconocido'
   } catch (error) {
     console.error('Error al decodificar token:', error)
     return 'Auditor Desconocido'
