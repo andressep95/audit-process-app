@@ -4,14 +4,12 @@
       <div
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
-        <!-- Fondo oscuro -->
         <Transition name="modal-fade">
           <div class="fixed inset-0 transition-opacity" aria-hidden="true">
             <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
           </div>
         </Transition>
 
-        <!-- Contenido del modal -->
         <div
           class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
         >
@@ -79,7 +77,6 @@
                     </div>
                   </div>
 
-                  <!-- Nombre y Apellido (igual que en UserCreateForm) -->
                   <div class="space-y-2">
                     <label for="firstName" class="text-sm font-medium">Nombre</label>
                     <input
@@ -104,9 +101,7 @@
                     />
                   </div>
 
-                  <!-- Sección de Estado y Roles -->
                   <div class="flex flex-wrap gap-6 items-start">
-                    <!-- Estado -->
                     <div class="space-y-2 flex-1 min-w-[120px]">
                       <label class="text-sm font-medium flex items-center">
                         <input
@@ -118,16 +113,17 @@
                       </label>
                     </div>
 
-                    <!-- Roles -->
                     <div class="space-y-2 flex-1 min-w-[160px]">
                       <label class="text-sm font-medium block mb-2">Roles</label>
                       <div class="flex flex-wrap gap-x-4 gap-y-2">
                         <label v-for="role in availableRoles" :key="role" class="flex items-center">
                           <input
-                            type="checkbox"
+                            type="radio"
                             v-model="form.roles"
                             :value="role"
-                            class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded mr-2"
+                            name="userEditRole"
+                            class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded-full mr-2"
+                            required
                           />
                           <span class="text-sm">{{ role }}</span>
                         </label>
@@ -135,7 +131,6 @@
                     </div>
                   </div>
 
-                  <!-- Botones -->
                   <div class="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
@@ -173,25 +168,25 @@ import { ref, watch } from 'vue'
 
 const props = defineProps({
   show: Boolean,
-  userData: Object,
+  userData: Object, // userData contiene los datos del usuario a editar
 })
 
 const emit = defineEmits(['submit', 'close'])
 
-// Formulario
+// Formulario reactivo
 const form = ref({
   username: '',
   email: '',
   firstName: '',
   lastName: '',
   enabled: true,
-  roles: [],
+  roles: '', // <--- Cambiado a un string para v-model de radios
 })
 
 const loading = ref(false)
-const availableRoles = ['USER', 'ADMIN']
+const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN'] // Asegúrate de que esta lista sea correcta para tus roles
 
-// Cargar datos del usuario cuando cambia la prop
+// Observador para la prop userData
 watch(
   () => props.userData,
   (newVal) => {
@@ -202,16 +197,28 @@ watch(
         firstName: newVal.firstName,
         lastName: newVal.lastName,
         enabled: newVal.enabled,
-        roles: [...newVal.roles],
+        // CLAVE: Toma el primer rol del array y asignarlo al string 'roles'
+        roles: newVal.roles && newVal.roles.length > 0 ? newVal.roles[0] : '',
+      }
+    } else {
+      // Opcional: Reiniciar el formulario si userData se vuelve nulo (al cerrar el modal, por ejemplo)
+      form.value = {
+        username: '',
+        email: '',
+        firstName: '',
+        lastName: '',
+        enabled: true,
+        roles: '',
       }
     }
   },
-  { immediate: true },
+  { immediate: true }, // Esto asegura que el watch se ejecute una vez al inicio si userData ya está presente
 )
 
 const submitForm = () => {
   loading.value = true
-  emit('submit', form.value)
+  // CLAVE: Envuelve el rol seleccionado (que es un string) en un array antes de emitirlo
+  emit('submit', { ...form.value, roles: [form.value.roles] })
   loading.value = false
 }
 </script>

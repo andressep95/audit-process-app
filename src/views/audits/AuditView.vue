@@ -97,11 +97,11 @@
                 v-if="!isAuditFinalized"
                 @click.stop="finalizarAuditoria"
                 :disabled="!allModulesCompleted"
-                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200"
+                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200"
                 :class="{
-                  'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500':
+                  'bg-black text-white hover:bg-gray-800 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500':
                     allModulesCompleted,
-                  'bg-gray-200 text-gray-500 cursor-not-allowed': !allModulesCompleted,
+                  'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none': !allModulesCompleted,
                 }"
               >
                 Finalizar Auditoría
@@ -109,7 +109,7 @@
               <button
                 v-else
                 @click.stop="editarAuditoria"
-                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 bg-black text-white hover:bg-gray-800 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
               >
                 Editar Auditoría
               </button>

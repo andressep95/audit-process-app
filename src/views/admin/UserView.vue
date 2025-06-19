@@ -229,7 +229,6 @@
     />
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import UserService from '@/services/UserService'
@@ -237,6 +236,7 @@ import UserCreateModal from '@/components/forms/UserCreateForm.vue'
 import UserEditModal from '@/components/forms/UserEditForm.vue'
 import NotificationModal from '@/components/common/NotificationModal.vue'
 import PaginationButtons from '@/components/common/Pagination.vue'
+import { useAuthStore } from '@/stores/auth' // <--- Import your auth store
 
 // Estado reactivo
 const users = ref([])
@@ -256,19 +256,35 @@ const notificationMessage = ref('')
 const currentPage = ref(1)
 const perPage = ref(6)
 
+// Instancia del store de autenticación
+const authStore = useAuthStore() // <--- Instancia el store
+
 // Computed properties
 const filteredUsers = computed(() => {
-  if (!searchTerm.value) {
-    return users.value
+  let currentUsers = users.value
+
+  // 1. Filtrar por término de búsqueda
+  if (searchTerm.value) {
+    const term = searchTerm.value.toLowerCase()
+    currentUsers = currentUsers.filter(
+      (user) =>
+        `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
+        user.email?.toLowerCase().includes(term) ||
+        user.username?.toLowerCase().includes(term),
+    )
   }
 
-  const term = searchTerm.value.toLowerCase()
-  return users.value.filter(
-    (user) =>
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(term) ||
-      user.email?.toLowerCase().includes(term) ||
-      user.username?.toLowerCase().includes(term),
-  )
+  // 2. Excluir al usuario logueado
+  // Accede al email del usuario logueado directamente desde el store de Pinia
+  if (authStore.user?.email) {
+    // <--- Usa authStore.user.email
+    const lowerCaseLoggedInEmail = authStore.user.email.toLowerCase()
+    currentUsers = currentUsers.filter(
+      (user) => user.email?.toLowerCase() !== lowerCaseLoggedInEmail,
+    )
+  }
+
+  return currentUsers
 })
 
 const paginatedUsers = computed(() => {
@@ -282,7 +298,7 @@ const loadUsers = async () => {
   loading.value = true
   try {
     users.value = await UserService.getUsers()
-    currentPage.value = 1 // Resetear a la primera página al cargar nuevos datos
+    currentPage.value = 1
   } catch (error) {
     console.error('Error loading users:', error)
   } finally {
@@ -298,7 +314,6 @@ const createUser = async (userData) => {
   try {
     await UserService.createUser(userData)
 
-    // Mostrar notificación de éxito
     notificationType.value = 'success'
     notificationTitle.value = 'Usuario creado'
     notificationMessage.value = 'El usuario se ha registrado correctamente.'
@@ -307,7 +322,6 @@ const createUser = async (userData) => {
     showCreateModal.value = false
     refreshUsers()
   } catch (error) {
-    // Mostrar notificación de error
     notificationType.value = 'error'
     notificationTitle.value = 'Error al crear usuario'
     notificationMessage.value = error.message || 'Ocurrió un error al intentar crear el usuario.'
@@ -342,6 +356,16 @@ const editUser = (user) => {
 const toggleUserStatus = async (user) => {
   const updatedStatus = !user.enabled
   try {
+    // Opcional: Impedir que se desactive el propio usuario logueado
+    if (authStore.user?.email && user.email?.toLowerCase() === authStore.user.email.toLowerCase()) {
+      // <--- Usa authStore.user.email aquí también
+      notificationType.value = 'error'
+      notificationTitle.value = 'Acción no permitida'
+      notificationMessage.value = 'No puedes deshabilitar tu propia cuenta.'
+      showNotification.value = true
+      return // Detener la ejecución
+    }
+
     await UserService.toggleUserStatus({
       email: user.email,
       enabled: updatedStatus,
@@ -355,7 +379,7 @@ const toggleUserStatus = async (user) => {
   } catch (error) {
     notificationType.value = 'error'
     notificationTitle.value = 'Error'
-    notificationMessage.value = 'No se pudo cambiar el estado del usuario.'
+    notificationMessage.value = error.message || 'No se pudo cambiar el estado del usuario.'
     console.error(error)
   } finally {
     showNotification.value = true
@@ -373,20 +397,13 @@ const getRoleClass = (role) => {
     ADMIN: 'text-purple-800 bg-purple-100',
     MODERATOR: 'text-blue-800 bg-blue-100',
     USER: 'text-gray-800 bg-gray-100',
-    JEFE_TIENDA: 'text-green-800 bg-green-100', // Ejemplo: si tienes un estilo específico para este rol
-    // Agrega más roles si es necesario, manteniendo el guion bajo aquí si así viene del backend
+    JEFE_TIENDA: 'text-green-800 bg-green-100',
+    AUDITOR: 'text-yellow-800 bg-yellow-100',
   }
 
-  // Primero, obtenemos la clase CSS según el rol original (con guion bajo si aplica)
   const roleClass = classes[role] || 'text-gray-800 bg-gray-100'
+  const formatRoleName = (roleName) => roleName.replace(/_/g, ' ')
 
-  // Luego, creamos una función auxiliar para formatear el texto del rol
-  const formatRoleName = (roleName) => {
-    // Reemplaza todos los guiones bajos por espacios
-    return roleName.replace(/_/g, ' ')
-  }
-
-  // Devolvemos un objeto con la clase CSS y el nombre formateado
   return {
     class: roleClass,
     formattedName: formatRoleName(role),
@@ -403,6 +420,8 @@ const resetPagination = () => {
 
 // Lifecycle
 onMounted(() => {
+  // Ya no necesitamos una función getLoggedInUser separada aquí,
+  // el store de Pinia ya tiene la información si el usuario está logueado.
   loadUsers()
 })
 </script>

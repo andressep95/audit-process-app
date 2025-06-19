@@ -1,18 +1,15 @@
-<!-- src/components/forms/UserCreateForm.vue -->
 <template>
   <Transition name="modal">
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
       <div
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
-        <!-- Fondo oscuro -->
         <Transition name="modal-fade">
           <div class="fixed inset-0 transition-opacity" aria-hidden="true">
             <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
           </div>
         </Transition>
 
-        <!-- Contenido del modal -->
         <div
           class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
         >
@@ -23,7 +20,6 @@
                   Crear Nuevo Usuario
                 </h3>
                 <form @submit.prevent="submitForm" class="space-y-4">
-                  <!-- Username -->
                   <div class="space-y-2">
                     <label for="username" class="text-sm font-medium">Usuario</label>
                     <div class="relative">
@@ -53,7 +49,6 @@
                     </div>
                   </div>
 
-                  <!-- Email -->
                   <div class="space-y-2">
                     <label for="email" class="text-sm font-medium">Email</label>
                     <div class="relative">
@@ -85,7 +80,6 @@
                     </div>
                   </div>
 
-                  <!-- Nombre -->
                   <div class="space-y-2">
                     <label for="firstName" class="text-sm font-medium">Nombre</label>
                     <input
@@ -98,7 +92,6 @@
                     />
                   </div>
 
-                  <!-- Apellido -->
                   <div class="space-y-2">
                     <label for="lastName" class="text-sm font-medium">Apellido</label>
                     <input
@@ -111,7 +104,6 @@
                     />
                   </div>
 
-                  <!-- Contraseña -->
                   <div class="space-y-2">
                     <label for="password" class="text-sm font-medium">Contraseña</label>
                     <div class="relative">
@@ -181,9 +173,7 @@
                     </div>
                   </div>
 
-                  <!-- Reemplaza las dos secciones con este código -->
                   <div class="flex flex-wrap gap-6 items-start">
-                    <!-- Estado -->
                     <div class="space-y-2 flex-1 min-w-[120px]">
                       <label class="text-sm font-medium flex items-center">
                         <input
@@ -195,16 +185,17 @@
                       </label>
                     </div>
 
-                    <!-- Roles -->
                     <div class="space-y-2 flex-1 min-w-[160px]">
                       <label class="text-sm font-medium block mb-2">Roles</label>
                       <div class="flex flex-wrap gap-x-4 gap-y-2">
                         <label v-for="role in availableRoles" :key="role" class="flex items-center">
                           <input
-                            type="checkbox"
+                            type="radio"
                             v-model="form.roles"
                             :value="role"
-                            class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded mr-2"
+                            name="userRole"
+                            class="h-4 w-4 text-black focus:ring-black border-gray-300 rounded-full mr-2"
+                            required
                           />
                           <span class="text-sm">{{ role }}</span>
                         </label>
@@ -212,7 +203,6 @@
                     </div>
                   </div>
 
-                  <!-- Botones -->
                   <div class="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
@@ -262,17 +252,18 @@ const initialFormState = {
   lastName: '',
   password: '',
   enabled: true,
-  roles: ['USER'],
+  roles: 'USER', // <--- Importante: inicializa como string
 }
 
 const form = ref({ ...initialFormState })
 const loading = ref(false)
 const showPassword = ref(false)
-const availableRoles = ['USER', 'ADMIN']
+const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN'] // Asegúrate de que esta lista sea correcta para tus roles
 
 const submitForm = () => {
   loading.value = true
-  emit('submit', form.value)
+  // CLAVE: Envuelve el rol seleccionado en un array antes de emitirlo
+  emit('submit', { ...form.value, roles: [form.value.roles] })
 
   // Resetear el formulario después de enviar
   form.value = { ...initialFormState }
@@ -281,6 +272,7 @@ const submitForm = () => {
 </script>
 
 <style scoped>
+/* Tus estilos existentes */
 .modal-enter-active,
 .modal-leave-active {
   transition: opacity 0.3s ease;
