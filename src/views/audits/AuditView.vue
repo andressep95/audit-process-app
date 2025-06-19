@@ -3,16 +3,16 @@
     <div class="px-6">
       <div
         @click="handleHeaderClick"
-        class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-6 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
+        class="relative bg-white cursor-pointer transition-all duration-300 border-b border-gray-100 p-4 rounded-xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:shadow-[0_6px_15px_rgba(0,0,0,0.1)]"
       >
         <div class="relative z-10">
           <div class="flex items-center justify-between">
             <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-gray-700"
+                    class="h-4 w-4 text-gray-700"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -25,11 +25,11 @@
                     />
                   </svg>
                 </div>
-                <h2 class="text-2xl font-bold tracking-tight text-gray-800">
+                <h2 class="text-xl font-bold tracking-tight text-gray-800">
                   {{ auditHeaders.storeName || 'Proceso de Auditoría' }}
                 </h2>
                 <span
-                  class="px-2 py-1 border border-gray-200 text-gray-600 bg-white shadow-sm rounded text-sm"
+                  class="px-1 py-0.5 border border-gray-200 text-gray-600 bg-white shadow-sm rounded text-xs"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -54,9 +54,7 @@
                   {{ auditHeaders.isCompleted ? 'Completada' : 'En progreso' }}
                 </span>
               </div>
-              <p class="text-gray-500 text-base">
-                Auditoría en curso • {{ auditHeaders.auditDate }}
-              </p>
+              <p class="text-gray-500 text-sm">Auditoría en curso • {{ auditHeaders.auditDate }}</p>
             </div>
             <div class="flex items-center gap-2">
               <div class="flex items-center gap-2 text-gray-800">
@@ -90,7 +88,7 @@
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span class="font-semibold">{{
+                <span class="font-semibold text-sm">{{
                   auditHeaders.isCompleted ? 'Completada' : 'En progreso'
                 }}</span>
               </div>
@@ -99,7 +97,7 @@
                 v-if="!isAuditFinalized"
                 @click.stop="finalizarAuditoria"
                 :disabled="!allModulesCompleted"
-                class="ml-4 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200"
                 :class="{
                   'bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500':
                     allModulesCompleted,
@@ -111,16 +109,18 @@
               <button
                 v-else
                 @click.stop="editarAuditoria"
-                class="ml-4 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                class="ml-3 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Editar Auditoría
               </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6 pt-6 border-t border-gray-100">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+          <div
+            class="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-3 mt-4 pt-4 border-t border-gray-100"
+          >
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 text-gray-600"
@@ -137,14 +137,14 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">País</p>
-                <p class="font-medium text-gray-800">
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">País</p>
+                <p class="font-medium text-gray-800 text-sm">
                   {{ auditHeaders.country || 'No especificado' }}
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 text-gray-600"
@@ -161,14 +161,16 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">Jefe de Tienda</p>
-                <p class="font-medium text-gray-800">
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">
+                  Jefe de Tienda
+                </p>
+                <p class="font-medium text-gray-800 text-sm">
                   {{ auditHeaders.storeManager || 'No especificado' }}
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 text-gray-600"
@@ -185,14 +187,14 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">Auditor</p>
-                <p class="font-medium text-gray-800">
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">Auditor</p>
+                <p class="font-medium text-gray-800 text-sm">
                   {{ auditHeaders.auditorName || 'No especificado' }}
                 </p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 text-gray-600"
@@ -209,15 +211,75 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide">Fecha</p>
-                <p class="font-medium text-gray-800">{{ auditHeaders.auditDate }}</p>
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">Fecha</p>
+                <p class="font-medium text-gray-800 text-sm">{{ auditHeaders.auditDate }}</p>
               </div>
             </div>
           </div>
 
-          <div class="mt-6 pt-6 border-t border-gray-100">
-            <div class="flex items-start gap-3">
-              <div class="p-2 bg-white shadow-[0_4px_10px_rgba(0,0,0,0.05)] rounded-lg">
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3 mt-4 pt-4 border-t border-gray-100"
+          >
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.79 2-4 2s-4-.895-4-2 1.79-2 4-2 4 .895 4 2zm-4 0V9a2 2 0 00-2-2H3c-1.105 0-2 .895-2 2v10c0 1.105 1.79 2 4 2s4-.895 4-2z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">
+                  Cumplimiento General
+                </p>
+                <p class="font-medium text-gray-800 text-sm">
+                  {{ auditHeaders.compliancePercentage.toFixed(2) }}%
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.539 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.381-1.81.588-1.81h4.915a1 1 0 00.95-.69l1.519-4.674z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide leading-tight">
+                  Calificación General
+                </p>
+                <p
+                  :class="getRatingClass(auditHeaders.overallRating)"
+                  class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full"
+                >
+                  {{ auditHeaders.overallRating || 'N/A' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <div class="flex items-start gap-2">
+              <div class="p-1 bg-white shadow-[0_2px_5px_rgba(0,0,0,0.05)] rounded-md">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   class="h-4 w-4 text-gray-600"
@@ -234,8 +296,10 @@
                 </svg>
               </div>
               <div>
-                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Observaciones</p>
-                <p class="font-medium text-gray-800">
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-0.5 leading-tight">
+                  Observaciones
+                </p>
+                <p class="font-medium text-gray-800 text-sm">
                   {{ auditHeaders.observations || 'No hay observaciones registradas' }}
                 </p>
               </div>
@@ -266,6 +330,38 @@
       @cerrar="onFormularioCerrado"
       @guardado="onFormularioGuardado"
     />
+
+    <ConfirmationModal
+      :modelValue="showConfirmFinalizeModal"
+      title="Finalizar Auditoría"
+      message="¿Estás seguro de que quieres finalizar y enviar esta auditoría? Esta acción la marcará como completada y la enviará."
+      confirmText="Sí, Finalizar"
+      cancelText="Cancelar"
+      variant="primary"
+      @confirm="confirmFinalizarAuditoria"
+      @cancel="cancelFinalizarAuditoria"
+      @update:modelValue="showConfirmFinalizeModal = $event"
+    />
+
+    <ConfirmationModal
+      :modelValue="showConfirmEditModal"
+      title="Editar Auditoría"
+      message="¿Estás seguro de que quieres editar esta auditoría? Esto desbloqueará los formularios para su modificación y la marcará como 'En progreso'."
+      confirmText="Sí, Editar"
+      cancelText="Cancelar"
+      variant="danger"
+      @confirm="confirmEditarAuditoria"
+      @cancel="cancelEditarAuditoria"
+      @update:modelValue="showConfirmEditModal = $event"
+    />
+
+    <NotificationModal
+      :show="showNotificationModal"
+      :type="notificationType"
+      :title="notificationTitle"
+      :message="notificationMessage"
+      @close="showNotificationModal = false"
+    />
   </div>
 </template>
 
@@ -280,12 +376,24 @@ import { decodeJWT } from '@/utils/jwt'
 import { calculateModuleCompliance, calculateAuditTotalCompliance } from '@/utils/auditCalculations'
 import { getInitialTasksForModule } from '@/utils/moduleTasksInitializers'
 
+// Importación de los nuevos modales
+import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+import NotificationModal from '@/components/common/NotificationModal.vue'
+
 const mostrarFormulario = ref(false)
 const AUDIT_DRAFT_KEY = 'auditDraft'
-const MODULE_PREFIX = 'auditModule_' // <-- Nueva constante para los prefijos de los módulos
+const MODULE_PREFIX = 'auditModule_'
 
 const isAuditFinalized = ref(false)
 const isEditingAudit = ref(false)
+
+// Estados para controlar los nuevos modales
+const showConfirmFinalizeModal = ref(false)
+const showConfirmEditModal = ref(false)
+const showNotificationModal = ref(false)
+const notificationType = ref('success') // 'success' o 'error'
+const notificationTitle = ref('')
+const notificationMessage = ref('')
 
 function obtenerAuditorDesdeToken(): string {
   const token = localStorage.getItem('access_token')
@@ -338,11 +446,9 @@ watch(
   { deep: true, immediate: true },
 )
 
-// --- Función para limpiar todos los borradores de localStorage ---
 const clearAllAuditDrafts = () => {
   console.info('Limpiando todos los borradores de auditoría del localStorage.')
   localStorage.removeItem(AUDIT_DRAFT_KEY)
-  // Iterar sobre todas las claves en localStorage y eliminar las que corresponden a módulos
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i)
     if (key && key.startsWith(MODULE_PREFIX)) {
@@ -368,7 +474,6 @@ const cargarDesdeLocalStorage = () => {
       const draftISO = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 
       if (draftISO === hoyISO) {
-        // Si la fecha coincide, carga el borrador
         parsed.auditorName = obtenerAuditorDesdeToken()
         auditHeaders.value = parsed
         if (parsed.isCompleted) {
@@ -377,25 +482,37 @@ const cargarDesdeLocalStorage = () => {
         mostrarFormulario.value = false
         console.log('Borrador de auditoría cargado desde localStorage:', parsed)
       } else {
-        // Si la fecha no coincide, es un borrador antiguo, lo elimina todo
         console.info('Borrador de auditoría con fecha antigua. Se procede a limpiar y reiniciar.')
-        clearAllAuditDrafts() // <-- Limpia también los módulos asociados
+        clearAllAuditDrafts()
         initializeDefaultModules()
         mostrarFormulario.value = true
       }
     } catch (e) {
       console.error('Error al leer o parsear el borrador de auditoría:', e)
-      // Si hay un error en el borrador principal, lo limpia y reinicia
-      clearAllAuditDrafts() // <-- Limpia también los módulos asociados
+      clearAllAuditDrafts()
       initializeDefaultModules()
       mostrarFormulario.value = true
     }
   } else {
-    // Si no hay borrador, inicializa módulos por defecto (y asegura que no haya módulos huérfanos)
     console.info('No se encontró borrador de auditoría. Inicializando auditoría nueva.')
-    clearAllAuditDrafts() // Asegura una limpieza completa al no encontrar borrador
+    clearAllAuditDrafts()
     initializeDefaultModules()
     mostrarFormulario.value = true
+  }
+}
+
+const getRatingClass = (rating: string) => {
+  switch (rating) {
+    case 'EFECTIVA':
+      return 'text-green-700 bg-green-100 border-green-200'
+    case 'OPORTUNIDAD DE MEJORA':
+      return 'text-yellow-700 bg-yellow-100 border-yellow-200'
+    case 'INEFECTIVA':
+      return 'text-orange-700 bg-orange-100 border-orange-200'
+    case 'DEFICIENTE':
+      return 'text-red-700 bg-red-100 border-red-200'
+    default:
+      return 'text-gray-700 bg-gray-100 border-gray-200'
   }
 }
 
@@ -476,18 +593,26 @@ const handleHeaderClick = () => {
   if (!isAuditFinalized.value || isEditingAudit.value) {
     mostrarFormulario.value = true
   } else {
-    console.log('Auditoría finalizada. Presiona "Editar Auditoría" para modificarla.')
+    notificationType.value = 'error'
+    notificationTitle.value = 'Auditoría Finalizada'
+    notificationMessage.value =
+      'La auditoría está finalizada. Presiona "Editar Auditoría" para modificarla.'
+    showNotificationModal.value = true
   }
 }
 
 function abrirSubModulo(sub: AuditModules) {
   if (isAuditFinalized.value && !isEditingAudit.value) {
-    console.warn('La auditoría está finalizada. Presiona "Editar Auditoría" para modificarla.')
+    notificationType.value = 'error'
+    notificationTitle.value = 'Auditoría Finalizada'
+    notificationMessage.value =
+      'La auditoría está finalizada. Presiona "Editar Auditoría" para modificarla.'
+    showNotificationModal.value = true
     return
   }
 
   const moduleWithTasks = { ...sub, tasks: getInitialTasksForModule(sub.id) }
-  const storedData = localStorage.getItem(`${MODULE_PREFIX}${sub.id}`) // <-- Usar la nueva constante
+  const storedData = localStorage.getItem(`${MODULE_PREFIX}${sub.id}`)
 
   if (storedData) {
     const parsedStoredData = JSON.parse(storedData)
@@ -538,16 +663,21 @@ function actualizarSubModulo(subModuloActualizado: AuditModules) {
 
 const finalizarAuditoria = async () => {
   if (!allModulesCompleted.value) {
-    alert('Por favor, complete todos los módulos antes de finalizar la auditoría.')
+    notificationType.value = 'error'
+    notificationTitle.value = 'Módulos Incompletos'
+    notificationMessage.value =
+      'Por favor, complete todos los módulos antes de finalizar la auditoría.'
+    showNotificationModal.value = true
     return
   }
 
-  if (!confirm('¿Estás seguro de que quieres finalizar y enviar esta auditoría?')) {
-    return
-  }
+  showConfirmFinalizeModal.value = true // Muestra el modal de confirmación
+}
 
+const confirmFinalizarAuditoria = async () => {
   console.log('Iniciando proceso de finalización y envío de auditoría...')
   auditHeaders.value.isCompleted = true
+  showConfirmFinalizeModal.value = false // Cierra el modal de confirmación
 
   try {
     const auditData = toRaw(auditHeaders.value)
@@ -556,30 +686,49 @@ const finalizarAuditoria = async () => {
 
     isAuditFinalized.value = true
     isEditingAudit.value = false
-    console.log('Auditoría enviada exitosamente. Borradores de localStorage limpiados.')
 
-    alert('Auditoría finalizada y enviada con éxito.')
+    notificationType.value = 'success'
+    notificationTitle.value = 'Auditoría Finalizada'
+    notificationMessage.value =
+      '¡Auditoría finalizada y enviada con éxito!<br>Los borradores han sido limpiados.'
+    showNotificationModal.value = true
   } catch (error) {
     console.error('Error al enviar la auditoría:', error)
-    alert('Hubo un error al finalizar y enviar la auditoría. Por favor, inténtalo de nuevo.')
     auditHeaders.value.isCompleted = false
     isAuditFinalized.value = false
     isEditingAudit.value = false
+
+    notificationType.value = 'error'
+    notificationTitle.value = 'Error al Enviar Auditoría'
+    notificationMessage.value =
+      'Hubo un error al finalizar y enviar la auditoría. Por favor, inténtalo de nuevo.'
+    showNotificationModal.value = true
   }
 }
 
+const cancelFinalizarAuditoria = () => {
+  showConfirmFinalizeModal.value = false
+}
+
 const editarAuditoria = () => {
-  if (
-    confirm(
-      '¿Estás seguro de que quieres editar esta auditoría? Esto desbloqueará los formularios para su modificación.',
-    )
-  ) {
-    isAuditFinalized.value = false
-    isEditingAudit.value = true
-    auditHeaders.value.isCompleted = false
-    console.log('Modo de edición activado. La auditoría puede ser modificada.')
-    alert('Modo de edición activado. Ya puedes modificar la auditoría.')
-  }
+  showConfirmEditModal.value = true // Muestra el modal de confirmación para editar
+}
+
+const confirmEditarAuditoria = () => {
+  isAuditFinalized.value = false
+  isEditingAudit.value = true
+  auditHeaders.value.isCompleted = false
+  console.log('Modo de edición activado. La auditoría puede ser modificada.')
+  showConfirmEditModal.value = false // Cierra el modal de confirmación
+
+  notificationType.value = 'success'
+  notificationTitle.value = 'Modo de Edición Activado'
+  notificationMessage.value = 'Se ha activado el modo de edición. Ya puedes modificar la auditoría.'
+  showNotificationModal.value = true
+}
+
+const cancelEditarAuditoria = () => {
+  showConfirmEditModal.value = false
 }
 
 onMounted(() => {

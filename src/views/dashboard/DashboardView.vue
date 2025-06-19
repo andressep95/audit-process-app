@@ -280,18 +280,16 @@ const formatDate = (dateString: string) => {
 
 const getRatingClass = (rating: string) => {
   switch (rating) {
-    case 'EXCELENTE':
-      return 'text-green-800 bg-green-100'
-    case 'BUENA':
-      return 'text-blue-800 bg-blue-100'
-    case 'ACEPTABLE':
-      return 'text-yellow-800 bg-yellow-100'
+    case 'EFECTIVA':
+      return 'text-green-700 bg-green-100 border-green-200'
+    case 'OPORTUNIDAD DE MEJORA':
+      return 'text-yellow-700 bg-yellow-100 border-yellow-200'
     case 'INEFECTIVA':
-      return 'text-orange-800 bg-orange-100'
-    case 'CRÍTICA':
-      return 'text-red-800 bg-red-100'
+      return 'text-orange-700 bg-orange-100 border-orange-200'
+    case 'DEFICIENTE':
+      return 'text-red-700 bg-red-100 border-red-200'
     default:
-      return 'text-gray-800 bg-gray-100'
+      return 'text-gray-700 bg-gray-100 border-gray-200'
   }
 }
 

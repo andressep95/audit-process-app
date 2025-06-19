@@ -52,7 +52,10 @@
 
         <div class="flex items-center justify-between text-sm text-gray-500">
           <span>Calificación</span>
-          <span class="font-medium text-gray-700">
+          <span
+            :class="getRatingClass(module.overallRating)"
+            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+          >
             {{ module.overallRating }}
           </span>
         </div>
@@ -85,6 +88,21 @@ defineEmits<{
 // const hideTooltip = () => {
 //   hoveredModuleId.value = null
 // }
+
+const getRatingClass = (rating: string) => {
+  switch (rating) {
+    case 'EFECTIVA':
+      return 'text-green-700 bg-green-100 border-green-200'
+    case 'OPORTUNIDAD DE MEJORA':
+      return 'text-yellow-700 bg-yellow-100 border-yellow-200'
+    case 'INEFECTIVA':
+      return 'text-orange-700 bg-orange-100 border-orange-200'
+    case 'DEFICIENTE':
+      return 'text-red-700 bg-red-100 border-red-200'
+    default:
+      return 'text-gray-700 bg-gray-100 border-gray-200'
+  }
+}
 </script>
 
 <style scoped>

@@ -101,12 +101,16 @@
                 </div>
                 <div>
                   <p class="text-gray-500">Errores Encontrados:</p>
-                  <p class="font-medium text-gray-800">{{ calculateErrorPercentage(subtask) }}%</p>
+                  <p class="font-medium text-gray-800">{{ subtask.errorsFound }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-500">Porcentaje de Error:</p>
+                  <p class="font-medium text-gray-800">{{ subtask.errorPercentage.toFixed(0) }}%</p>
                 </div>
                 <div>
                   <p class="text-gray-500">Porcentaje de Cumplimiento:</p>
                   <p class="font-medium text-gray-800">
-                    {{ calculateCompliancePercentage(subtask) }}%
+                    {{ subtask.compliancePercentage.toFixed(0) }}%
                   </p>
                 </div>
                 <div class="sm:col-span-2">
@@ -169,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, computed } from 'vue' // Elimina 'computed' si ya no se usa, o déjalo si lo usas para otras cosas
+import { ref, defineProps } from 'vue' // 'computed' ha sido removido
 import type { AuditModules, AuditSubTask, Task } from '@/models/models'
 
 const props = defineProps<{
@@ -180,17 +184,13 @@ const props = defineProps<{
 interface BackendAuditModule extends AuditModules {
   auditTasks?: (Task & {
     auditSubtasks?: (AuditSubTask & {
-      auditObservations?: any[]
+      auditObservations?: any[] // Puedes refinar 'any[]' si sabes la interfaz de AuditObservations
     })[]
   })[]
 }
 
 // Ahora, `props.moduleData` se trata con la estructura que tu código funcional espera.
 const currentModuleData = props.moduleData as BackendAuditModule
-
-// Removimos la propiedad computada sortedAuditTasks de aquí,
-// ya que el ordenamiento de las tareas se hará en el componente padre.
-// Si tenías otras computadas aquí, mantenlas.
 
 // Objeto para controlar el estado de expansión de cada tarea
 const expandedTasks = ref<{ [key: number]: boolean }>({})
@@ -199,33 +199,21 @@ const toggleTaskExpand = (taskId: number) => {
   expandedTasks.value[taskId] = !expandedTasks.value[taskId]
 }
 
-const calculateErrorPercentage = (subtask: AuditSubTask): string => {
-  if (subtask.auditedSamples > 0) {
-    return ((subtask.errorsFound / subtask.auditedSamples) * 100).toFixed(0)
-  }
-  return '0'
-}
-
-const calculateCompliancePercentage = (subtask: AuditSubTask): string => {
-  const errorP = parseFloat(calculateErrorPercentage(subtask))
-  return (100 - errorP).toFixed(0)
-}
+// *** Las funciones calculateErrorPercentage y calculateCompliancePercentage han sido eliminadas ***
+// *** ya que se asume que errorPercentage y compliancePercentage vienen precalculados en la data. ***
 
 const getRatingClass = (rating: string) => {
   switch (rating) {
-    case 'EXCELENTE':
-      return 'text-green-800 bg-green-100'
-    case 'BUENA':
-    case 'SOBRESALIENTE':
-      return 'text-blue-800 bg-blue-100'
-    case 'ACEPTABLE':
-      return 'text-yellow-800 bg-yellow-100'
+    case 'EFECTIVA':
+      return 'text-green-700 bg-green-100 border-green-200'
+    case 'OPORTUNIDAD DE MEJORA':
+      return 'text-yellow-700 bg-yellow-100 border-yellow-200'
     case 'INEFECTIVA':
-      return 'text-orange-800 bg-orange-100'
-    case 'CRÍTICA':
-      return 'text-red-800 bg-red-100'
+      return 'text-orange-700 bg-orange-100 border-orange-200'
+    case 'DEFICIENTE':
+      return 'text-red-700 bg-red-100 border-red-200'
     default:
-      return 'text-gray-800 bg-gray-100'
+      return 'text-gray-700 bg-gray-100 border-gray-200'
   }
 }
 
@@ -242,3 +230,7 @@ const getRiskLevelClass = (riskLevel: string) => {
   }
 }
 </script>
+
+<style scoped>
+/* Tus estilos existentes si los tienes */
+</style>
