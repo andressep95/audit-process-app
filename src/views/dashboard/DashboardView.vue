@@ -247,25 +247,28 @@ import PaginationButtons from '@/components/common/Pagination.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { AuditHeaders } from '@/models/models'
 import type { AuditSummary } from '@/models/AuditSummary'
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
+import 'dayjs/locale/es'
+
+dayjs.extend(customParseFormat)
+dayjs.locale('es')
 
 import AuditDetailModal from '@/components/common/AuditDetailModal.vue'
 
 const router = useRouter()
 
-// Estado reactivo
-const allAudits = ref<AuditSummary[]>([]) // <-- Aquí se guardan TODAS las auditorías
+const allAudits = ref<AuditSummary[]>([])
 const searchTerm = ref('')
 const loading = ref(false)
 
-// Notificación
 const showNotification = ref(false)
 const notificationType = ref('success')
 const notificationTitle = ref('')
 const notificationMessage = ref('')
 
-// Paginación LOCAL (ahora se aplica sobre `filteredAudits`)
-const currentPage = ref(1) // Cambiado a 1 para la lógica de paginación basada en 1
-const perPage = ref(6) // Número de elementos por página
+const currentPage = ref(1)
+const perPage = ref(6)
 
 const authStore = useAuthStore()
 const userRole = computed(() => authStore.user?.roles?.[0] || 'USER')
@@ -273,9 +276,6 @@ const userRole = computed(() => authStore.user?.roles?.[0] || 'USER')
 const showAuditDetailModal = ref(false)
 const selectedAuditDetail = ref<AuditHeaders | null>(null)
 
-// --- Propiedades Computadas para Filtrado y Paginación LOCAL ---
-
-// 1. filteredAudits: Aplica el filtro de búsqueda a `allAudits`
 const filteredAudits = computed(() => {
   if (!searchTerm.value) {
     return allAudits.value
@@ -289,33 +289,25 @@ const filteredAudits = computed(() => {
       audit.storeManager?.toLowerCase().includes(term) ||
       audit.auditorName?.toLowerCase().includes(term) ||
       audit.overallRating?.toLowerCase().includes(term) ||
-      formatDate(audit.auditDate).toLowerCase().includes(term), // Permite buscar por fecha formateada
+      formatDate(audit.auditDate).toLowerCase().includes(term),
   )
 })
 
-// 2. paginatedAudits: Aplica la paginación a `filteredAudits`
 const paginatedAudits = computed(() => {
   const start = (currentPage.value - 1) * perPage.value
   const end = start + perPage.value
   return filteredAudits.value.slice(start, end)
 })
 
-// --- Métodos ---
-
-// `loadAudits` ahora obtiene TODAS las auditorías
 const loadAudits = async () => {
   loading.value = true
   try {
     let responseData: AuditSummary[] = []
     if (userRole.value === 'ADMIN' || userRole.value === 'AUDITOR') {
-      // Asumo que tienes un método en AuditService que trae TODAS las auditorías sin paginación
-      // Si no existe, deberás crear uno, por ejemplo: AuditService.getAllAudits()
-      // O ajustar AuditService.getAudits para que cuando page/size sean null/undefined traiga todo
-      const res = await AuditService.getAudits(0, 1000) // <-- Podrías ajustar un tamaño grande o un método que traiga todo
+      const res = await AuditService.getAudits(0, 1000)
       responseData = res.content
     } else if (userRole.value === 'JEFE_TIENDA') {
-      // De igual forma, un método que traiga TODAS las auditorías para el jefe de tienda
-      const res = await AuditService.getAuditsForStoreChief(0, 1000) // <-- Podrías ajustar un tamaño grande o un método que traiga todo
+      const res = await AuditService.getAuditsForStoreChief(0, 1000)
       responseData = res.content
     } else {
       console.warn('Unrecognized role or no permission to view audits.')
@@ -323,8 +315,8 @@ const loadAudits = async () => {
       loading.value = false
       return
     }
-    allAudits.value = responseData // Almacena todas las auditorías
-    currentPage.value = 1 // Resetea la paginación a la primera página al cargar nuevos datos
+    allAudits.value = responseData
+    currentPage.value = 1
   } catch (error) {
     console.error('Error loading audits:', error)
     notificationType.value = 'error'
@@ -339,9 +331,9 @@ const loadAudits = async () => {
 }
 
 const refreshAudits = () => {
-  searchTerm.value = '' // Limpia el término de búsqueda al refrescar
-  resetPagination() // Restablece la paginación a la primera página
-  loadAudits() // Vuelve a cargar todas las auditorías
+  searchTerm.value = ''
+  resetPagination()
+  loadAudits()
 }
 
 const viewAuditDetails = async (auditSummary: AuditSummary) => {
@@ -373,15 +365,27 @@ const closeAuditDetailModal = () => {
 
 const formatDate = (dateString: string) => {
   if (!dateString) return ''
-  // Asegúrate de que dateString es un formato que Date pueda parsear, e.g., 'YYYY-MM-DD'
-  // Si tu backend envía 'DD/MM/YYYY', necesitarás parsearlo primero.
-  // Ejemplo para 'DD/MM/YYYY' a 'YYYY-MM-DD' para Date:
-  const parts = dateString.split('/')
-  if (parts.length === 3) {
-    dateString = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+
+  // Primer intento: Parsear la cadena directamente (dayjs intentará inferir)
+  let date = dayjs(dateString)
+
+  // Si el primer intento no es válido, probamos con el formato DD/MM/YYYY explícitamente
+  // El 'true' al final lo hace un parseo estricto
+  if (!date.isValid()) {
+    date = dayjs(dateString, 'DD/MM/YYYY', true)
   }
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
-  return new Date(dateString).toLocaleDateString('es-ES', options)
+
+  // Si después de ambos intentos sigue sin ser una fecha válida
+  if (!date.isValid()) {
+    console.warn(
+      'Fecha inválida después de múltiples intentos de parseo en DashboardView:',
+      dateString,
+    )
+    return 'Fecha inválida'
+  }
+
+  // Formateamos la salida siempre a 'DD/MM/YYYY'
+  return date.format('DD/MM/YYYY')
 }
 
 const getRatingClass = (rating: string) => {
@@ -399,12 +403,10 @@ const getRatingClass = (rating: string) => {
   }
 }
 
-// Este método es llamado por el componente de paginación
 const handlePageChange = (page: number) => {
   currentPage.value = page
 }
 
-// Resetea la paginación a la primera página cuando el término de búsqueda cambia
 const resetPagination = () => {
   currentPage.value = 1
 }
