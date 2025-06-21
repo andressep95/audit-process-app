@@ -1,224 +1,236 @@
 <template>
-  <div
-    class="fixed inset-0 bg-gray-900 bg-opacity-40 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4"
-    @click="handleClickOutside"
-  >
+  <Transition name="modal" appear>
     <div
-      ref="modalContent"
-      class="bg-white p-8 rounded-xl shadow-2xl max-w-4xl w-full relative border border-gray-100 transform transition-all duration-300 scale-100 opacity-100"
+      v-if="subModulo"
+      class="fixed inset-0 bg-gray-900 bg-opacity-40 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4"
+      @click="handleClickOutside"
     >
-      <div v-if="currentSubModulo">
-        <h3 class="text-3xl font-extrabold mb-6 text-gray-800 tracking-tight">
-          Módulo: {{ currentSubModulo.moduleName }}
-        </h3>
-
-        <form @submit.prevent="guardarModulo" class="space-y-8">
-          <div
-            v-if="currentTask"
-            :key="currentTask.id"
-            class="border border-gray-200 rounded-xl p-6 bg-white shadow-lg"
-          >
-            <div
-              v-if="currentTask.subtasks.length > 0"
-              class="flex justify-between items-center mb-6 border-b pb-4 border-gray-200"
-            >
-              <h5 class="text-lg font-semibold text-gray-700">
-                {{ `${currentTask?.taskCode}. ${currentTask?.procedureDescription} Subtarea` }}
-                {{ currentSubtaskIndex + 1 }} de
-                {{ currentTask?.subtasks.length }}
-              </h5>
-              <div class="space-x-2">
-                <button
-                  type="button"
-                  @click.stop="goToPrevSubtask"
-                  :disabled="!canGoPrevSubtask"
-                  class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
-                >
-                  &lt;
-                </button>
-                <button
-                  type="button"
-                  @click.stop="goToNextSubtask"
-                  :disabled="!canGoNextSubtask"
-                  class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
-                >
-                  &gt;
-                </button>
-              </div>
-            </div>
-
-            <div
-              v-if="currentSubtask"
-              :key="currentSubtask.id"
-              class="mb-4 bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-inner"
-            >
-              <p class="text-base text-gray-800 font-medium mb-3">
-                {{ currentTask?.taskCode }}.{{ currentSubtask?.requerimentCode }}
-                {{ currentSubtask?.procedureDescription }}
-              </p>
-              <p class="text-sm text-gray-600 mb-4">
-                Nivel de Riesgo: <span class="font-semibold">{{ currentSubtask.riskLevel }}</span>
-              </p>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                <div>
-                  <label
-                    :for="`auditedSamples-${currentSubtask.id}`"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Muestras Auditadas
-                  </label>
-                  <input
-                    :id="`auditedSamples-${currentSubtask.id}`"
-                    type="number"
-                    v-model.number="currentSubtask.auditedSamples"
-                    min="0"
-                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
-                  />
-                </div>
-                <div>
-                  <label
-                    :for="`errorsFound-${currentSubtask.id}`"
-                    class="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Errores Encontrados
-                  </label>
-                  <input
-                    :id="`errorsFound-${currentSubtask.id}`"
-                    type="number"
-                    v-model.number="currentSubtask.errorsFound"
-                    min="0"
-                    :max="currentSubtask.auditedSamples"
-                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
-                  />
-                </div>
-              </div>
-
-              <div class="mt-5 text-right">
-                <button
-                  type="button"
-                  @click.stop="openObservationModal"
-                  class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
-                >
-                  Gestionar Observaciones
-                </button>
-              </div>
-            </div>
-            <p v-else class="text-gray-500 italic p-4 text-center">
-              No hay subtareas definidas para esta tarea.
-            </p>
-          </div>
-
-          <p v-else class="text-gray-500 italic p-4 text-center">
-            No hay tareas definidas para este módulo.
-          </p>
-
-          <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
-            <button
-              type="button"
-              @click.stop="goToPrevTask"
-              :disabled="!canGoPrevTask"
-              class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              Tarea Anterior
-            </button>
-
-            <div class="flex gap-4">
-              <button
-                type="button"
-                @click.stop="cerrarModalYGuardar"
-                class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-              >
-                Cerrar
-              </button>
-
-              <button
-                type="button"
-                v-if="currentSubModulo && currentTaskIndex < currentSubModulo.tasks.length - 1"
-                @click.stop="goToNextTask"
-                class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
-              >
-                Siguiente Tarea
-              </button>
-              <button
-                type="submit"
-                v-else
-                class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
-              >
-                Guardar Módulo
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-      <div v-else class="text-center p-6 text-gray-700">
-        <p class="text-xl">Cargando módulo...</p>
-      </div>
-    </div>
-  </div>
-
-  <div
-    v-if="showIncompleteTasksWarningModal"
-    class="fixed inset-0 bg-gray-900 bg-opacity-40 flex justify-center items-center z-[100] p-4"
-    @click.self="showIncompleteTasksWarningModal = false"
-  >
-    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full relative border border-gray-100">
-      <h4 class="text-2xl font-bold mb-4 text-gray-800 text-center">Tareas Pendientes</h4>
-      <p class="mb-6 text-gray-700 leading-relaxed">
-        Tiene tareas sin culminar en las siguientes secciones:
-      </p>
-      <ul class="list-disc list-inside mb-8 text-gray-600 space-y-2 pl-4">
-        <li v-for="task in incompleteTasksList" :key="task.id" class="text-base">
-          <span class="font-semibold text-gray-800">{{ task.taskCode }}:</span>
-          {{ task.procedureDescription }}
-        </li>
-      </ul>
-      <button
-        type="button"
-        @click="showIncompleteTasksWarningModal = false"
-        class="px-6 py-3 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors w-full text-lg"
+      <div
+        ref="modalContent"
+        class="bg-white p-8 rounded-xl shadow-2xl max-w-4xl w-full relative border border-gray-100"
+        tabindex="-1"
       >
-        Entendido
-      </button>
+        <div v-if="currentSubModulo">
+          <h3 class="text-3xl font-extrabold mb-6 text-gray-800 tracking-tight">
+            Módulo: {{ currentSubModulo.moduleName }}
+          </h3>
+
+          <form @submit.prevent="guardarModulo" class="space-y-8">
+            <div
+              v-if="currentTask"
+              :key="currentTask.id"
+              class="border border-gray-200 rounded-xl p-6 bg-white shadow-lg"
+            >
+              <div
+                v-if="currentTask.subtasks.length > 0"
+                class="flex justify-between items-center mb-6 border-b pb-4 border-gray-200"
+              >
+                <h5 class="text-lg font-semibold text-gray-700">
+                  {{ `${currentTask?.taskCode}. ${currentTask?.procedureDescription} Subtarea` }}
+                  {{ currentSubtaskIndex + 1 }} de
+                  {{ currentTask?.subtasks.length }}
+                </h5>
+                <div class="space-x-2">
+                  <button
+                    type="button"
+                    @click.stop="goToPrevSubtask"
+                    :disabled="!canGoPrevSubtask"
+                    class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
+                  >
+                    &lt;
+                  </button>
+                  <button
+                    type="button"
+                    @click.stop="goToNextSubtask"
+                    :disabled="!canGoNextSubtask"
+                    class="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-colors"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+
+              <div
+                v-if="currentSubtask"
+                :key="currentSubtask.id"
+                class="mb-4 bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-inner"
+              >
+                <p class="text-base text-gray-800 font-medium mb-3">
+                  {{ currentTask?.taskCode }}.{{ currentSubtask?.requerimentCode }}
+                  {{ currentSubtask?.procedureDescription }}
+                </p>
+                <p class="text-sm text-gray-600 mb-4">
+                  Nivel de Riesgo: <span class="font-semibold">{{ currentSubtask.riskLevel }}</span>
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <div>
+                    <label
+                      :for="`auditedSamples-${currentSubtask.id}`"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Muestras Auditadas
+                    </label>
+                    <input
+                      :id="`auditedSamples-${currentSubtask.id}`"
+                      type="number"
+                      v-model.number="currentSubtask.auditedSamples"
+                      min="0"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      :for="`errorsFound-${currentSubtask.id}`"
+                      class="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      Errores Encontrados
+                    </label>
+                    <input
+                      :id="`errorsFound-${currentSubtask.id}`"
+                      type="number"
+                      v-model.number="currentSubtask.errorsFound"
+                      min="0"
+                      :max="currentSubtask.auditedSamples"
+                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
+                    />
+                  </div>
+                </div>
+
+                <div class="mt-5 text-right">
+                  <button
+                    type="button"
+                    @click.stop="openObservationModal"
+                    class="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                  >
+                    Gestionar Observaciones
+                  </button>
+                </div>
+              </div>
+              <p v-else class="text-gray-500 italic p-4 text-center">
+                No hay subtareas definidas para esta tarea.
+              </p>
+            </div>
+
+            <p v-else class="text-gray-500 italic p-4 text-center">
+              No hay tareas definidas para este módulo.
+            </p>
+
+            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                @click.stop="goToPrevTask"
+                :disabled="!canGoPrevTask"
+                class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Tarea Anterior
+              </button>
+
+              <div class="flex gap-4">
+                <button
+                  type="button"
+                  @click.stop="cerrarModalYGuardar"
+                  class="px-6 py-2 border border-gray-300 rounded-lg shadow-sm text-base font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                >
+                  Cerrar
+                </button>
+
+                <button
+                  type="button"
+                  v-if="currentSubModulo && currentTaskIndex < currentSubModulo.tasks.length - 1"
+                  @click.stop="goToNextTask"
+                  class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
+                >
+                  Siguiente Tarea
+                </button>
+                <button
+                  type="submit"
+                  v-else
+                  class="px-6 py-2 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
+                >
+                  Guardar Módulo
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div v-else class="text-center p-6 text-gray-700">
+          <p class="text-xl">Cargando módulo...</p>
+        </div>
+      </div>
     </div>
-  </div>
+  </Transition>
 
-  <div
-    v-if="showObservationModal"
-    class="fixed inset-0 bg-gray-900 bg-opacity-20 flex justify-center items-center z-[110] p-4"
-    @click.self="closeObservationModal"
-  >
-    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative border border-gray-100">
-      <h5 class="text-lg font-semibold mb-4 text-gray-800">
-        Observación para: {{ currentSubtask?.requerimentCode }}
-      </h5>
-      <textarea
-        v-if="currentSubtask?.observations?.[0]"
-        v-model="currentSubtask.observations[0].observationText"
-        rows="5"
-        class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
-        placeholder="Escriba aquí sus observaciones..."
-      ></textarea>
-      <p v-else class="text-gray-500 italic mb-4">No hay observación registrada.</p>
-
-      <div class="mt-5 flex justify-end space-x-3">
+  <Transition name="modal" appear>
+    <div
+      v-if="showIncompleteTasksWarningModal"
+      class="fixed inset-0 bg-gray-900 bg-opacity-40 flex justify-center items-center z-[100] p-4"
+      @click.self="showIncompleteTasksWarningModal = false"
+    >
+      <div
+        class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full relative border border-gray-100"
+      >
+        <h4 class="text-2xl font-bold mb-4 text-gray-800 text-center">Tareas Pendientes</h4>
+        <p class="mb-6 text-gray-700 leading-relaxed">
+          Tiene tareas sin culminar en las siguientes secciones:
+        </p>
+        <ul class="list-disc list-inside mb-8 text-gray-600 space-y-2 pl-4">
+          <li v-for="task in incompleteTasksList" :key="task.id" class="text-base">
+            <span class="font-semibold text-gray-800">{{ task.taskCode }}:</span>
+            {{ task.procedureDescription }}
+          </li>
+        </ul>
         <button
           type="button"
-          @click="closeObservationModal"
-          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+          @click="showIncompleteTasksWarningModal = false"
+          class="px-6 py-3 bg-gray-800 text-white rounded-lg shadow-md hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors w-full text-lg"
         >
-          Cerrar
-        </button>
-        <button
-          type="button"
-          @click="saveObservation"
-          class="px-4 py-2 bg-gray-800 text-white rounded-md shadow-sm hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
-        >
-          Guardar Observación
+          Entendido
         </button>
       </div>
     </div>
-  </div>
+  </Transition>
+
+  <Transition name="modal" appear>
+    <div
+      v-if="showObservationModal"
+      class="fixed inset-0 bg-gray-900 bg-opacity-20 flex justify-center items-center z-[110] p-4"
+      @click.self="closeObservationModal"
+    >
+      <div
+        class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full relative border border-gray-100"
+      >
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">
+          Observación para: {{ currentSubtask?.requerimentCode }}
+        </h5>
+        <textarea
+          v-if="currentSubtask?.observations?.[0]"
+          v-model="currentSubtask.observations[0].observationText"
+          rows="5"
+          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
+          placeholder="Escriba aquí sus observaciones..."
+        ></textarea>
+        <p v-else class="text-gray-500 italic mb-4">No hay observación registrada.</p>
+
+        <div class="mt-5 flex justify-end space-x-3">
+          <button
+            type="button"
+            @click="closeObservationModal"
+            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Cerrar
+          </button>
+          <button
+            type="button"
+            @click="saveObservation"
+            class="px-4 py-2 bg-gray-800 text-white rounded-md shadow-sm hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-offset-2 transition-colors"
+          >
+            Guardar Observación
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -244,7 +256,7 @@ const modalContent = ref<HTMLElement | null>(null)
 const showIncompleteTasksWarningModal = ref(false)
 const showObservationModal = ref(false)
 
-const MODULE_PREFIX = 'auditModule_' // <-- ¡Asegúrate de que esta constante sea la misma!
+const MODULE_PREFIX = 'auditModule_'
 
 const currentTask = computed<Task | undefined>(() => {
   return currentSubModulo.value?.tasks[currentTaskIndex.value]
@@ -276,12 +288,11 @@ const canGoPrevTask = computed(() => {
 })
 
 const saveToLocalStorage = (module: AuditModules) => {
-  localStorage.setItem(`${MODULE_PREFIX}${module.id}`, JSON.stringify(toRaw(module))) // <-- Usar la constante
-  console.log(`Módulo ${module.moduleName} guardado en localStorage.`)
+  localStorage.setItem(`${MODULE_PREFIX}${module.id}`, JSON.stringify(toRaw(module)))
 }
 
 const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
-  const stored = localStorage.getItem(`${MODULE_PREFIX}${moduleId}`) // <-- Usar la constante
+  const stored = localStorage.getItem(`${MODULE_PREFIX}${moduleId}`)
   if (stored) {
     try {
       const parsed = JSON.parse(stored)
@@ -291,7 +302,7 @@ const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
       throw new Error('Datos de módulo inválidos en localStorage.')
     } catch (e) {
       console.error(`Error al cargar o parsear módulo ${moduleId} de localStorage:`, e)
-      localStorage.removeItem(`${MODULE_PREFIX}${moduleId}`) // <-- Usar la constante al limpiar
+      localStorage.removeItem(`${MODULE_PREFIX}${moduleId}`)
       return null
     }
   }
@@ -438,7 +449,7 @@ watch(
             initializeObservations(subtask)
           })
         })
-        console.log('Datos cargados de localStorage (ExistenciaForm):', toRaw(loadedData))
+        console.log('Datos de módulo cargados desde localStorage:', toRaw(loadedData)) // Adjusted log
       } else {
         const initialTasks = getInitialTasksForModule(newVal.id)
         currentSubModulo.value = { ...newVal, tasks: initialTasks }
@@ -448,7 +459,7 @@ watch(
           })
         })
         console.log(
-          'Módulo inicializado con tareas por defecto (ExistenciaForm):',
+          'Módulo inicializado con tareas por defecto:', // Adjusted log
           toRaw(currentSubModulo.value),
         )
       }
@@ -473,3 +484,32 @@ watch(
   { deep: true },
 )
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease; /* Transición más corta y solo opacidad */
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+/* Para 'modal-enter-to' y 'modal-leave-from' ya no necesitas el 'transform: scale(1)' */
+.modal-enter-to,
+.modal-leave-from {
+  opacity: 1;
+}
+
+/* Estilos para ocultar las flechas de los inputs numéricos */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+</style>

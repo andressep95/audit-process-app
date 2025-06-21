@@ -1,23 +1,17 @@
-// src/components/forms/AuditModuleForm.vue
 <template>
   <Transition name="modal">
     <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
       <div
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
-        <!-- Fondo oscuro -->
-        <Transition name="modal-fade">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div
-              class="absolute inset-0 bg-gray-500 opacity-75"
-              @click.self="cerrarFormulario"
-            ></div>
-          </div>
-        </Transition>
-
-        <!-- Contenido del modal -->
         <div
-          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+          class="fixed inset-0 bg-gray-500 bg-opacity-75"
+          aria-hidden="true"
+          @click.self="cerrarFormulario"
+        ></div>
+
+        <div
+          class="modal-content inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
         >
           <div class="bg-white px-8 pt-5 pb-4 sm:p-8 sm:pb-4">
             <div class="sm:flex sm:items-start">
@@ -30,7 +24,7 @@
                       <label for="pais" class="block text-sm font-medium text-gray-700">País</label>
                       <select
                         id="pais"
-                        v-model="auditHeaders.country"
+                        v-model="internalAuditHeaders.country"
                         required
                         class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                       >
@@ -45,7 +39,7 @@
                       >
                       <select
                         id="tienda"
-                        v-model="auditHeaders.storeName"
+                        v-model="internalAuditHeaders.storeName"
                         required
                         class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                       >
@@ -60,7 +54,7 @@
                       >
                       <input
                         id="jefeTienda"
-                        v-model="auditHeaders.storeManager"
+                        v-model="internalAuditHeaders.storeManager"
                         type="text"
                         required
                         placeholder="Nombre del jefe..."
@@ -76,7 +70,7 @@
                       >
                       <input
                         id="auditor"
-                        v-model="auditHeaders.auditorName"
+                        v-model="internalAuditHeaders.auditorName"
                         type="text"
                         disabled
                         class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
@@ -89,7 +83,7 @@
                       >
                       <input
                         id="fechaAuditoria"
-                        v-model="auditHeaders.auditDate"
+                        v-model="internalAuditHeaders.auditDate"
                         type="text"
                         disabled
                         class="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-100"
@@ -116,13 +110,12 @@
                     >
                     <textarea
                       id="observaciones"
-                      v-model="auditHeaders.observations"
+                      v-model="internalAuditHeaders.observations"
                       rows="4"
                       class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                     ></textarea>
                   </div>
 
-                  <!-- Botones -->
                   <div class="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
@@ -149,7 +142,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits, defineProps, watch, computed, ref } from 'vue' // Importa ref
+import { defineEmits, defineProps, watch, computed, ref } from 'vue'
 import type { AuditHeaders } from '@/models/models'
 
 const emit = defineEmits(['guardado', 'cerrar'])
@@ -158,18 +151,14 @@ const props = defineProps<{
   show: Boolean
 }>()
 
-// Crea una copia interna del objeto de props para trabajar localmente.
-// Esto previene mutaciones directas a las props.
 const internalAuditHeaders = ref<AuditHeaders>({ ...props.auditHeaders })
 
-// Observa cambios en el prop 'auditHeaders' y actualiza la copia interna
-// Esto es crucial para cuando el padre carga un draft y lo pasa al formulario.
 watch(
   () => props.auditHeaders,
   (newValue) => {
     internalAuditHeaders.value = { ...newValue }
   },
-  { deep: true, immediate: true }, // 'immediate' para que se ejecute al montar
+  { deep: true, immediate: true },
 )
 
 const stores = ['Sucursal Santiago', 'Sucursal La Serena', 'Sucursal Rancagua']
@@ -179,8 +168,6 @@ const stateText = computed(() => {
 })
 
 const guardarFormulario = () => {
-  // Emitimos la copia interna del objeto, que ya tiene los cambios del formulario
-  console.log()
   emit('guardado', internalAuditHeaders.value)
 }
 
@@ -188,36 +175,21 @@ const cerrarFormulario = () => {
   emit('cerrar')
 }
 </script>
+
 <style scoped>
-/* Transición del modal principal */
 .modal-enter-active,
 .modal-leave-active {
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s ease;
+  transition: opacity 0.3s ease; /* Transición más corta y solo opacidad */
 }
+
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
-  transform: scale(0.95);
 }
+
+/* Para 'modal-enter-to' y 'modal-leave-from' ya no necesitas el 'transform: scale(1)' */
 .modal-enter-to,
 .modal-leave-from {
   opacity: 1;
-  transform: scale(1);
-}
-
-/* Transición del fondo oscuro */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-.modal-fade-enter-from,
-.modal-fade-leave-to {
-  opacity: 0;
-}
-.modal-fade-enter-to,
-.modal-fade-leave-from {
-  opacity: 0.75;
 }
 </style>

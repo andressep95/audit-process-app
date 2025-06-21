@@ -420,8 +420,6 @@ const resetPagination = () => {
 
 // Lifecycle
 onMounted(() => {
-  // Ya no necesitamos una función getLoggedInUser separada aquí,
-  // el store de Pinia ya tiene la información si el usuario está logueado.
   loadUsers()
 })
 </script>

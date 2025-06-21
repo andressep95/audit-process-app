@@ -40,16 +40,7 @@ const routes = [
           title: 'Auditorías',
         },
       },
-      {
-        path: '/checklists',
-        name: 'checklists',
-        component: () => import('@/views/checklists/CheckListView.vue'),
-        meta: {
-          transition: 'slide-up',
-          title: 'Checklists',
-        },
-      },
-      // Nueva ruta protegida solo para ADMIN
+
       {
         path: '/admin/users',
         name: 'users',
