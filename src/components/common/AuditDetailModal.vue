@@ -1,86 +1,88 @@
 <template>
-  <div
-    v-if="show"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"
-    @click.self="closeModal"
-  >
-    <div class="relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-      <div class="p-6 overflow-y-auto flex-grow">
-        <AuditSummaryCard :auditData="processedAuditData" />
+  <Transition name="modal">
+    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black bg-opacity-50" @click.self="closeModal"></div>
 
-        <div v-if="processedAuditData" class="mt-6 border-t border-gray-200 pt-6">
-          <div class="relative">
-            <Transition name="fade" mode="out-in">
-              <AuditModuleDetail
-                v-if="
-                  processedAuditData.auditModules &&
-                  processedAuditData.auditModules[currentModuleIndex]
-                "
-                :key="processedAuditData.auditModules[currentModuleIndex].id"
-                :moduleData="processedAuditData.auditModules[currentModuleIndex]"
-              />
-            </Transition>
+      <div
+        class="modal-content relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col"
+      >
+        <div class="p-6 overflow-y-auto flex-grow">
+          <AuditSummaryCard :auditData="processedAuditData" />
 
-            <div
-              v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
-              class="absolute inset-y-0 left-0 flex items-center"
-            >
-              <button
-                @click="prevModule"
-                :disabled="currentModuleIndex === 0"
-                class="bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed -ml-4"
+          <div v-if="processedAuditData" class="mt-6 border-t border-gray-200 pt-6">
+            <div class="relative">
+              <Transition name="fade" mode="out-in">
+                <AuditModuleDetail
+                  v-if="
+                    processedAuditData.auditModules &&
+                    processedAuditData.auditModules[currentModuleIndex]
+                  "
+                  :key="processedAuditData.auditModules[currentModuleIndex].id"
+                  :moduleData="processedAuditData.auditModules[currentModuleIndex]"
+                />
+              </Transition>
+
+              <div
+                v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
+                class="absolute inset-y-0 left-0 flex items-center"
               >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
+                <button
+                  @click="prevModule"
+                  :disabled="currentModuleIndex === 0"
+                  class="bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed -ml-4"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"
-                  ></path>
-                </svg>
-              </button>
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+              <div
+                v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
+                class="absolute inset-y-0 right-0 flex items-center"
+              >
+                <button
+                  @click="nextModule"
+                  :disabled="currentModuleIndex === processedAuditData.auditModules.length - 1"
+                  class="bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed -mr-4"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div
-              v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
-              class="absolute inset-y-0 right-0 flex items-center"
-            >
-              <button
-                @click="nextModule"
-                :disabled="currentModuleIndex === processedAuditData.auditModules.length - 1"
-                class="bg-white p-2 rounded-full shadow-md text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed -mr-4"
-              >
-                <svg
-                  class="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  ></path>
-                </svg>
-              </button>
+            <div class="text-center text-sm text-gray-500 mt-4">
+              Módulo {{ currentModuleIndex + 1 }} de
+              {{ processedAuditData.auditModules ? processedAuditData.auditModules.length : 0 }}
             </div>
           </div>
-          <div class="text-center text-sm text-gray-500 mt-4">
-            Módulo {{ currentModuleIndex + 1 }} de
-            {{ processedAuditData.auditModules ? processedAuditData.auditModules.length : 0 }}
-          </div>
+          <div v-else class="text-center text-gray-500 py-10">Cargando datos de auditoría...</div>
         </div>
-        <div v-else class="text-center text-gray-500 py-10">Cargando datos de auditoría...</div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup lang="ts">
@@ -89,10 +91,10 @@ import type { AuditHeaders, AuditModules, Task, AuditSubTask } from '@/models/mo
 import AuditSummaryCard from './AuditSummaryCard.vue'
 import AuditModuleDetail from './AuditModuleDetail.vue'
 import dayjs from 'dayjs'
-import customParseFormat from 'dayjs/plugin/customParseFormat' // Importar si no está
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import 'dayjs/locale/es'
 
-dayjs.extend(customParseFormat) // Extender si no está
+dayjs.extend(customParseFormat)
 dayjs.locale('es')
 
 const props = defineProps<{
@@ -119,23 +121,13 @@ watch(
   () => props.auditData,
   (newData) => {
     if (newData) {
-      // Realizamos una copia profunda para evitar mutaciones directas del prop
       const dataCopy: AuditHeaders = JSON.parse(JSON.stringify(newData))
 
-      // --- Nuevo código para normalizar la fecha ---
       if (dataCopy.auditDate) {
-        // Primero, intentar parsear la fecha de forma flexible.
-        // Dayjs es bueno inferiendo formatos ISO 8601 (YYYY-MM-DD, etc.)
         let parsedDate = dayjs(dataCopy.auditDate)
-
-        // Si no es válida o viene en DD/MM/YYYY pero dayjs no lo infiere,
-        // intentar explícitamente con DD/MM/YYYY (el 'true' es para parseo estricto)
         if (!parsedDate.isValid()) {
           parsedDate = dayjs(dataCopy.auditDate, 'DD/MM/YYYY', true)
         }
-
-        // Si después de ambos intentos sigue siendo inválida, puedes loguear una advertencia.
-        // De lo contrario, formateamos la fecha al formato deseado para el componente hijo.
         if (parsedDate.isValid()) {
           dataCopy.auditDate = parsedDate.format('DD/MM/YYYY')
         } else {
@@ -143,12 +135,8 @@ watch(
             'Fecha recibida en AuditDetailModal inválida, se mantendrá original:',
             dataCopy.auditDate,
           )
-          // Opcional: podrías establecerla en null o un string de error si prefieres que el AuditSummaryCard
-          // maneje un valor no válido de manera explícita si llega a este punto.
-          // dataCopy.auditDate = null;
         }
       }
-      // --- Fin del nuevo código para normalizar la fecha ---
 
       if (dataCopy.auditModules) {
         ;(dataCopy.auditModules as BackendAuditModule[]).forEach((module) => {
@@ -212,6 +200,49 @@ const nextModule = () => {
 </script>
 
 <style scoped>
+/* Transición del modal principal */
+/* Aplicada al div directamente envuelto por <Transition name="modal"> */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease; /* Solo opacidad para el contenedor general (fondo incluido) */
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-to,
+.modal-leave-from {
+  opacity: 1;
+}
+
+/* Animación para el contenido del modal (el cuadro blanco) */
+/* Asegúrate de que el div del contenido tenga la clase 'modal-content' en tu HTML */
+.modal-enter-active .modal-content,
+.modal-leave-active .modal-content {
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out; /* Animación de escala y opacidad */
+}
+
+.modal-enter-from .modal-content {
+  transform: scale(0.9); /* Empieza un poco más pequeño */
+  opacity: 0; /* Empieza invisible */
+}
+
+.modal-leave-to .modal-content {
+  transform: scale(0.9); /* Termina un poco más pequeño */
+  opacity: 0; /* Termina invisible */
+}
+
+.modal-enter-to .modal-content,
+.modal-leave-from .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* La transición 'fade' para los módulos internos está bien como está */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
