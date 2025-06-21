@@ -173,34 +173,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from 'vue' // 'computed' ha sido removido
+import { ref, defineProps } from 'vue'
 import type { AuditModules, AuditSubTask, Task } from '@/models/models'
 
 const props = defineProps<{
   moduleData: AuditModules
 }>()
 
-// Definimos una interfaz extendida para manejar la estructura de datos del backend.
 interface BackendAuditModule extends AuditModules {
   auditTasks?: (Task & {
     auditSubtasks?: (AuditSubTask & {
-      auditObservations?: any[] // Puedes refinar 'any[]' si sabes la interfaz de AuditObservations
+      auditObservations?: any[]
     })[]
   })[]
 }
 
-// Ahora, `props.moduleData` se trata con la estructura que tu código funcional espera.
 const currentModuleData = props.moduleData as BackendAuditModule
 
-// Objeto para controlar el estado de expansión de cada tarea
 const expandedTasks = ref<{ [key: number]: boolean }>({})
 
 const toggleTaskExpand = (taskId: number) => {
   expandedTasks.value[taskId] = !expandedTasks.value[taskId]
 }
-
-// *** Las funciones calculateErrorPercentage y calculateCompliancePercentage han sido eliminadas ***
-// *** ya que se asume que errorPercentage y compliancePercentage vienen precalculados en la data. ***
 
 const getRatingClass = (rating: string) => {
   switch (rating) {
@@ -230,7 +224,3 @@ const getRiskLevelClass = (riskLevel: string) => {
   }
 }
 </script>
-
-<style scoped>
-/* Tus estilos existentes si los tienes */
-</style>

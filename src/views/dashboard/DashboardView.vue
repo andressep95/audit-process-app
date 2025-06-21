@@ -256,8 +256,6 @@ dayjs.locale('es')
 
 import AuditDetailModal from '@/components/common/AuditDetailModal.vue'
 
-const router = useRouter()
-
 const allAudits = ref<AuditSummary[]>([])
 const searchTerm = ref('')
 const loading = ref(false)
@@ -366,16 +364,12 @@ const closeAuditDetailModal = () => {
 const formatDate = (dateString: string) => {
   if (!dateString) return ''
 
-  // Primer intento: Parsear la cadena directamente (dayjs intentará inferir)
   let date = dayjs(dateString)
 
-  // Si el primer intento no es válido, probamos con el formato DD/MM/YYYY explícitamente
-  // El 'true' al final lo hace un parseo estricto
   if (!date.isValid()) {
     date = dayjs(dateString, 'DD/MM/YYYY', true)
   }
 
-  // Si después de ambos intentos sigue sin ser una fecha válida
   if (!date.isValid()) {
     console.warn(
       'Fecha inválida después de múltiples intentos de parseo en DashboardView:',
@@ -384,7 +378,6 @@ const formatDate = (dateString: string) => {
     return 'Fecha inválida'
   }
 
-  // Formateamos la salida siempre a 'DD/MM/YYYY'
   return date.format('DD/MM/YYYY')
 }
 
@@ -415,7 +408,3 @@ onMounted(() => {
   loadAudits()
 })
 </script>
-
-<style scoped>
-/* Tu estilo existente aquí */
-</style>

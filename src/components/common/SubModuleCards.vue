@@ -69,7 +69,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue' // 'ref' se mantiene por si lo usas en otros lados del script
 import type { AuditModules } from '@/models/models'
 
 defineProps<{
@@ -79,15 +78,6 @@ defineProps<{
 defineEmits<{
   (e: 'select-submodule', module: AuditModules): void
 }>()
-
-// Eliminamos hoveredModuleId y las funciones showTooltip/hideTooltip
-// const hoveredModuleId = ref<number | null>(null)
-// const showTooltip = (id: number) => {
-//   hoveredModuleId.value = id
-// }
-// const hideTooltip = () => {
-//   hoveredModuleId.value = null
-// }
 
 const getRatingClass = (rating: string) => {
   switch (rating) {

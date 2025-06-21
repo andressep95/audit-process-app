@@ -291,22 +291,18 @@ import 'dayjs/locale/es'
 dayjs.locale('es')
 
 const props = defineProps<{
-  auditData: AuditHeaders | null // Recibe la data completa de la auditoría
-  showActionsSlot?: boolean // true si quieres mostrar el espacio para acciones, false por defecto
+  auditData: AuditHeaders | null
+  showActionsSlot?: boolean
 }>()
 
 const formatDate = (dateString: string) => {
   if (!dateString) return ''
-  // Intentamos parsear la fecha asumiendo que ya viene en 'DD/MM/YYYY'
   const date = dayjs(dateString, 'DD/MM/YYYY')
 
   if (!date.isValid()) {
-    // Si por alguna razón la fecha no es válida con ese formato,
-    // podemos loguear una advertencia y devolver un mensaje de error.
     console.warn('Fecha recibida en formato inesperado o inválido:', dateString)
     return 'Fecha inválida'
   }
-  // Cambiamos el formato de salida a 'DD/MM/YYYY'
   return date.format('DD/MM/YYYY')
 }
 
