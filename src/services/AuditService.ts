@@ -1,6 +1,7 @@
 // src/services/AuditService.ts
 import apiClient from '@/services/Api'
 import type { AuditHeaders } from '@/models/models'
+import type { AuditReadHeaders, PaginatedResponse } from '@/models/audit-read-models'
 
 const AuditService = {
   /**
@@ -38,6 +39,23 @@ const AuditService = {
     }
   },
 
+  async getAuditsFullDetails(
+    page: number = 0,
+    size: number = 6,
+  ): Promise<PaginatedResponse<AuditReadHeaders>> {
+    try {
+      const response = await apiClient.get<PaginatedResponse<AuditReadHeaders>>(
+        '/audits/full-details',
+        {
+          params: { page, size },
+        },
+      )
+      return response.data
+    } catch (error) {
+      console.error('Error al obtener todas las auditorías (detalles completos):', error)
+      throw error
+    }
+  },
   /**
    * Obtiene un resumen de las auditorías para el Jefe de Tienda logueado.
    * El nombre del gerente de tienda se obtiene del token en el backend.

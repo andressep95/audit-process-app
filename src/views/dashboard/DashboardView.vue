@@ -15,6 +15,19 @@
             >
               Actualizar
             </button>
+            <button
+              @click="handleGenerateExcel"
+              :disabled="loadingExcel || filteredAudits.length === 0"
+              class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              :class="
+                loadingExcel || filteredAudits.length === 0
+                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 text-white'
+              "
+            >
+              <span v-if="loadingExcel">Generando...</span>
+              <span v-else>Generar Reporte Excel</span>
+            </button>
           </div>
 
           <div class="relative">
@@ -47,7 +60,7 @@
 
     <div class="mb-6">
       <div
-        v-if="loading"
+        v-if="loading || loadingExcel"
         class="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-12"
       >
         <svg
@@ -70,7 +83,9 @@
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
-        <p class="mt-2 text-gray-600">Cargando auditorías...</p>
+        <p class="mt-2 text-gray-600">
+          {{ loadingExcel ? 'Generando reporte Excel...' : 'Cargando auditorías...' }}
+        </p>
       </div>
 
       <AppTable
@@ -187,12 +202,21 @@ dayjs.locale('es')
 import AuditDetailModal from '@/components/common/AuditDetailModal.vue'
 import AppTable from '@/components/common/AppTable.vue'
 
+// --- Importación de la función de generación de Excel ---
+import { generateAuditsExcel } from '@/utils/excelGenerator'
+
+// --- IMPORTACIONES CLAVE PARA EL REPORTE EXCEL Y TIPOS DEL SERVICIO ---
+// Asegúrate de que esta ruta y los tipos son correctos en tu proyecto
+import type { AuditReadHeaders, PaginatedResponse } from '@/models/audit-read-models'
+// ---
+
 const allAudits = ref<AuditSummary[]>([])
 const searchTerm = ref('')
 const loading = ref(false)
+const loadingExcel = ref(false) // Nuevo estado de carga para la generación de Excel
 
 const showNotification = ref(false)
-const notificationType = ref('success')
+const notificationType = ref<'success' | 'error' | 'warning' | 'info'>('success') // Tipo más explícito
 const notificationTitle = ref('')
 const notificationMessage = ref('')
 
@@ -203,7 +227,7 @@ const authStore = useAuthStore()
 const userRole = computed(() => authStore.user?.roles?.[0] || 'USER')
 
 const showAuditDetailModal = ref(false)
-const selectedAuditDetail = ref<AuditHeaders | null>(null)
+const selectedAuditDetail = ref<AuditHeaders | null>(null) // Mantenemos AuditHeaders aquí
 
 // Define los encabezados de la tabla para las auditorías
 const auditTableHeaders = [
@@ -244,20 +268,19 @@ const paginatedAudits = computed(() => {
 const loadAudits = async () => {
   loading.value = true
   try {
-    let responseData: AuditSummary[] = []
+    // Usamos PaginatedResponse para la carga de resumen de la tabla principal
+    let response: PaginatedResponse<AuditSummary>
     if (userRole.value === 'ADMIN' || userRole.value === 'AUDITOR') {
-      const res = await AuditService.getAudits(0, 1000)
-      responseData = res.content
+      response = await AuditService.getAudits(0, 6)
     } else if (userRole.value === 'JEFE_TIENDA') {
-      const res = await AuditService.getAuditsForStoreChief(0, 1000)
-      responseData = res.content
+      response = await AuditService.getAuditsForStoreChief(0, 6)
     } else {
       console.warn('Unrecognized role or no permission to view audits.')
       allAudits.value = []
       loading.value = false
       return
     }
-    allAudits.value = responseData
+    allAudits.value = response.content
     currentPage.value = 1
   } catch (error) {
     console.error('Error loading audits:', error)
@@ -279,9 +302,10 @@ const refreshAudits = () => {
 }
 
 const viewAuditDetails = async (auditSummary: AuditSummary) => {
-  loading.value = true // Mantén el loading aquí para la carga de detalles
+  // Aquí obtenemos el detalle completo para el modal, que usa AuditHeaders
+  loading.value = true
   try {
-    const fullAuditData = await AuditService.getAuditFullDetailsByStoreAndDate(
+    const fullAuditData: AuditHeaders = await AuditService.getAuditFullDetailsByStoreAndDate(
       auditSummary.storeName,
       auditSummary.auditDate,
       auditSummary.country,
@@ -296,7 +320,7 @@ const viewAuditDetails = async (auditSummary: AuditSummary) => {
       'No se pudieron cargar los detalles completos de la auditoría. Por favor, inténtalo de nuevo.'
     showNotification.value = true
   } finally {
-    loading.value = false // Asegúrate de quitar el loading al finalizar
+    loading.value = false
   }
 }
 
@@ -347,6 +371,63 @@ const handlePageChange = (page: number) => {
 const resetPagination = () => {
   currentPage.value = 1
 }
+
+// --- Nuevo método para generar el Excel ---
+const handleGenerateExcel = async () => {
+  loadingExcel.value = true
+  try {
+    // *** CAMBIO CLAVE AQUÍ: `auditsToExport` ahora es `AuditReadHeaders[]` ***
+    let auditsToExport: AuditReadHeaders[] = []
+
+    if (userRole.value === 'ADMIN' || userRole.value === 'AUDITOR') {
+      // *** CAMBIO CLAVE AQUÍ: `res` ahora es `PaginatedResponse<AuditReadHeaders>` ***
+      // Esto coincide con lo que tu servicio AuditService.getAuditsFullDetails ya está devolviendo.
+      const res: PaginatedResponse<AuditReadHeaders> = await AuditService.getAuditsFullDetails(
+        0,
+        10000,
+      ) // Un número grande para obtener todos los datos
+      auditsToExport = res.content // Esto ahora es type-safe y sin errores
+    } else {
+      /*else if (userRole.value === 'JEFE_TIENDA') {
+      // Si tienes un método getAuditsForStoreChiefFullDetails que devuelve AuditReadHeaders:
+      const res: PaginatedResponse<AuditReadHeaders> = await AuditService.getAuditsForStoreChiefFullDetails(0, 10000)
+      auditsToExport = res.content
+    } */
+      notificationType.value = 'warning'
+      notificationTitle.value = 'Permiso Denegado'
+      notificationMessage.value = 'No tienes permiso para generar este reporte detallado.'
+      showNotification.value = true
+      return
+    }
+
+    if (auditsToExport.length === 0) {
+      notificationType.value = 'warning'
+      notificationTitle.value = 'Sin Datos para Exportar'
+      notificationMessage.value = 'No hay auditorías completas disponibles para generar el reporte.'
+      showNotification.value = true
+      return
+    }
+
+    // Esto ahora es type-safe, ya que `auditsToExport` es `AuditReadHeaders[]`,
+    // que es lo que `generateAuditsExcel` espera.
+    await generateAuditsExcel(auditsToExport)
+
+    notificationType.value = 'success'
+    notificationTitle.value = 'Reporte Generado'
+    notificationMessage.value = 'El archivo Excel se ha descargado exitosamente.'
+    showNotification.value = true
+  } catch (error) {
+    console.error('Error al generar el reporte Excel:', error)
+    notificationType.value = 'error'
+    notificationTitle.value = 'Error al Generar'
+    notificationMessage.value =
+      'No se pudo generar el reporte Excel. Inténtalo de nuevo. Revisa la consola para más detalles.'
+    showNotification.value = true
+  } finally {
+    loadingExcel.value = false
+  }
+}
+// ---
 
 onMounted(() => {
   loadAudits()
