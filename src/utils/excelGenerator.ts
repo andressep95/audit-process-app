@@ -12,9 +12,8 @@ import type {
   AuditReadTask,
   AuditReadSubTask,
   AuditReadObservation,
-} from '@/models/audit-read-models' // ¡Asegúrate de que la ruta sea correcta!
+} from '@/models/audit-read-models'
 
-// Función auxiliar para convertir letra de columna a número (asumo que ya la tienes)
 function columnLetterToNumber(letter: string): number {
   let column = 0
   let length = letter.length
@@ -24,7 +23,6 @@ function columnLetterToNumber(letter: string): number {
   return column
 }
 
-// Función para formatear fechas (asumo que ya la tienes, o la puedes añadir si es necesaria)
 function formatDate(dateString: string | Date | undefined): string {
   if (!dateString) {
     return ''
@@ -44,15 +42,14 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
   // --- Pestaña de Resumen General ---
   const summarySheet = workbook.addWorksheet('Resumen Auditorías')
   summarySheet.columns = [
-    { header: 'ID Auditoría', key: 'auditId', width: 15 },
     { header: 'País', key: 'country', width: 15 },
     { header: 'Tienda', key: 'storeName', width: 25 },
     { header: 'Gerente de Tienda', key: 'storeManager', width: 25 },
     { header: 'Auditor', key: 'auditorName', width: 25 },
-    { header: 'Fecha Auditoría', key: 'auditDate', width: 18 },
-    { header: 'Completada', key: 'isCompleted', width: 12 },
+    { header: 'Fecha Auditoría', key: 'auditDate', width: 15 },
     { header: '% Cumplimiento General', key: 'compliancePercentage', width: 20 },
     { header: 'Calificación General', key: 'overallRating', width: 20 },
+    { header: 'Observaciobes', key: 'observations', width: 20 },
   ]
 
   // Estilos para la cabecera de la tabla de resumen
@@ -87,6 +84,7 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
       isCompleted: audit.isCompleted ? 'Sí' : 'No',
       compliancePercentage: audit.compliancePercentage + '%',
       overallRating: audit.overallRating,
+      observations: audit.observations || 'N/A',
     })
   })
 
@@ -100,8 +98,36 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
           bottom: { style: 'thin' },
           right: { style: 'thin' },
         }
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: 'center',
+          wrapText: true,
+        }
       })
     }
+  })
+
+  summarySheet.eachRow((row) => {
+    row.height = 20 // Altura mínima
+
+    // Recorrer cada celda de la fila para ajustar la altura si es necesario
+    row.eachCell((cell) => {
+      // Solo ajustar si la celda tiene 'wrapText' activado y tiene un valor
+      if (cell.alignment?.wrapText && cell.value) {
+        let columnWidth = 10 // Valor por defecto si no se puede obtener el ancho de la columna
+
+        if (typeof cell.col === 'object' && cell.col !== null && 'width' in cell.col) {
+          columnWidth = (cell.col as ExcelJS.Column).width || 10
+        }
+
+        const textLength = String(cell.value).length
+        const charsPerLine = Math.floor(columnWidth / 0.7) // Aproximación de caracteres por línea
+        const lines = Math.ceil(textLength / charsPerLine)
+        if (lines > 1) {
+          row.height = Math.max(row.height, lines * 15) // Ajusta la altura de la fila
+        }
+      }
+    })
   })
 
   // --- Pestañas Individuales por Auditoría ---
