@@ -45,172 +45,103 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-      <div class="p-6">
-        <div v-if="loading" class="text-center py-12">
-          <svg
-            class="animate-spin h-8 w-8 text-gray-500 mx-auto"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
+    <div class="mb-6">
+      <div
+        v-if="loading"
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 text-center py-12"
+      >
+        <svg
+          class="animate-spin h-8 w-8 text-gray-500 mx-auto"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <p class="mt-2 text-gray-600">Cargando auditorías...</p>
+      </div>
+
+      <AppTable
+        v-else
+        :headers="auditTableHeaders"
+        :items="paginatedAudits"
+        :empty-message-title="
+          searchTerm ? 'No se encontraron resultados' : 'No hay auditorías registradas'
+        "
+        :empty-message-text="
+          searchTerm
+            ? 'Intenta con otro término de búsqueda'
+            : 'Registra tu primera auditoría para verla aquí.'
+        "
+      >
+        <template #cell-isCompleted="{ item: audit }">
+          <span
+            :class="
+              audit.isCompleted
+                ? 'text-green-700 bg-green-100 border-green-200'
+                : 'text-yellow-700 bg-yellow-100 border-yellow-200'
+            "
+            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full border"
           >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-          </svg>
-          <p class="mt-2 text-gray-600">Cargando auditorías...</p>
-        </div>
+            {{ audit.isCompleted ? 'Completada' : 'Pendiente' }}
+          </span>
+        </template>
 
-        <div v-else class="rounded-2xl overflow-hidden">
-          <table class="min-w-full divide-y divide-gray-100">
-            <thead class="bg-white">
-              <tr>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  País
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Tienda
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Jefe de Tienda
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Auditor
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Fecha
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Estado
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Cumplimiento
-                </th>
-                <th
-                  class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Calificación
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider"
-                >
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-              <tr
-                v-for="audit in paginatedAudits"
-                :key="`${audit.storeName}-${audit.auditDate}-${audit.country}`"
-                class="hover:bg-gray-50 transition-colors duration-150"
-              >
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ audit.country }}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ audit.storeName }}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ audit.storeManager }}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ audit.auditorName }}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatDate(audit.auditDate) }}
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <span
-                    :class="
-                      audit.isCompleted
-                        ? 'text-green-700 bg-green-100 border-green-200'
-                        : 'text-yellow-700 bg-yellow-100 border-yellow-200'
-                    "
-                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full border"
-                  >
-                    {{ audit.isCompleted ? 'Completada' : 'Pendiente' }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {{ audit.compliancePercentage }}%
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <span
-                    :class="getRatingClass(audit.overallRating)"
-                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                  >
-                    {{ audit.overallRating }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex items-center justify-end gap-2">
-                    <button
-                      @click="viewAuditDetails(audit)"
-                      class="text-blue-600 hover:text-blue-800 transition-colors duration-150 font-medium text-sm"
-                    >
-                      Ver
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <template #cell-compliancePercentage="{ item: audit }">
+          {{ audit.compliancePercentage }}%
+        </template>
 
-          <div v-if="filteredAudits.length === 0 && !loading" class="text-center py-12">
-            <div
-              class="mx-auto h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center mb-4"
+        <template #cell-overallRating="{ item: audit }">
+          <span
+            :class="getRatingClass(audit.overallRating)"
+            class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+          >
+            {{ audit.overallRating }}
+          </span>
+        </template>
+
+        <template #cell-actions="{ item: audit }">
+          <div class="flex items-center justify-end gap-2">
+            <button
+              @click="viewAuditDetails(audit)"
+              class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-200 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-200"
             >
               <svg
-                class="h-6 w-6 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
+                stroke-width="1.5"
                 stroke="currentColor"
+                class="w-4 h-4 mr-1 -ml-1"
               >
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                 />
               </svg>
-            </div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-2">
-              {{ searchTerm ? 'No se encontraron resultados' : 'No hay auditorías registradas' }}
-            </h3>
-            <p class="text-sm text-gray-500 max-w-sm mx-auto">
-              {{
-                searchTerm
-                  ? 'Intenta con otro término de búsqueda'
-                  : 'Registra tu primera auditoría para verla aquí.'
-              }}
-            </p>
+              Ver
+            </button>
           </div>
-        </div>
-      </div>
+        </template>
+      </AppTable>
     </div>
 
     <div v-if="filteredAudits.length > 0" class="flex justify-center mt-6">
@@ -240,12 +171,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import AuditService from '@/services/AuditService'
 import NotificationModal from '@/components/common/NotificationModal.vue'
 import PaginationButtons from '@/components/common/Pagination.vue'
 import { useAuthStore } from '@/stores/auth'
-import type { AuditHeaders } from '@/models/models'
+import type { AuditHeaders } from '@/models/models' // Asegúrate de que AuditHeaders esté correctamente definido.
 import type { AuditSummary } from '@/models/AuditSummary'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -255,6 +185,7 @@ dayjs.extend(customParseFormat)
 dayjs.locale('es')
 
 import AuditDetailModal from '@/components/common/AuditDetailModal.vue'
+import AppTable from '@/components/common/AppTable.vue'
 
 const allAudits = ref<AuditSummary[]>([])
 const searchTerm = ref('')
@@ -273,6 +204,19 @@ const userRole = computed(() => authStore.user?.roles?.[0] || 'USER')
 
 const showAuditDetailModal = ref(false)
 const selectedAuditDetail = ref<AuditHeaders | null>(null)
+
+// Define los encabezados de la tabla para las auditorías
+const auditTableHeaders = [
+  { key: 'country', label: 'País', align: 'left' as const },
+  { key: 'storeName', label: 'Tienda', align: 'left' as const },
+  { key: 'storeManager', label: 'Jefe de Tienda', align: 'left' as const },
+  { key: 'auditorName', label: 'Auditor', align: 'left' as const },
+  { key: 'auditDate', label: 'Fecha', align: 'left' as const },
+  { key: 'isCompleted', label: 'Estado', align: 'left' as const },
+  { key: 'compliancePercentage', label: 'Cumplimiento', align: 'left' as const },
+  { key: 'overallRating', label: 'Calificación', align: 'left' as const },
+  { key: 'actions', label: 'Acciones', align: 'right' as const },
+] as const
 
 const filteredAudits = computed(() => {
   if (!searchTerm.value) {
@@ -335,7 +279,7 @@ const refreshAudits = () => {
 }
 
 const viewAuditDetails = async (auditSummary: AuditSummary) => {
-  loading.value = true
+  loading.value = true // Mantén el loading aquí para la carga de detalles
   try {
     const fullAuditData = await AuditService.getAuditFullDetailsByStoreAndDate(
       auditSummary.storeName,
@@ -352,7 +296,7 @@ const viewAuditDetails = async (auditSummary: AuditSummary) => {
       'No se pudieron cargar los detalles completos de la auditoría. Por favor, inténtalo de nuevo.'
     showNotification.value = true
   } finally {
-    loading.value = false
+    loading.value = false // Asegúrate de quitar el loading al finalizar
   }
 }
 

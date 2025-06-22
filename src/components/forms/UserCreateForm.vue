@@ -235,35 +235,46 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import type { UserInput } from '@/models/User' // Asegúrate de que la ruta sea correcta para UserInput
 
 const props = defineProps({
   show: Boolean,
 })
 
-const emit = defineEmits(['submit', 'close'])
+// Define explícitamente los eventos que el componente puede emitir
+const emit = defineEmits<{
+  (e: 'submit', userData: UserInput): void // El evento 'submit' ahora emite un objeto de tipo UserInput
+  (e: 'close'): void
+}>()
 
 // Formulario inicial
-const initialFormState = {
+const initialFormState: UserInput = {
+  // Aseguramos que el estado inicial cumpla con UserInput
   username: '',
   email: '',
   firstName: '',
   lastName: '',
   password: '',
   enabled: true,
-  roles: 'USER', // <--- Importante: inicializa como string
+  roles: ['USER'], // Inicializa roles como un array, ya que UserInput lo requiere así
 }
 
-const form = ref({ ...initialFormState })
+const form = ref<UserInput>({ ...initialFormState }) // Aseguramos que 'form' es de tipo UserInput
 const loading = ref(false)
 const showPassword = ref(false)
-const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN'] // Asegúrate de que esta lista sea correcta para tus roles
+const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN']
 
 const submitForm = () => {
   loading.value = true
-  // CLAVE: Envuelve el rol seleccionado en un array antes de emitirlo
-  emit('submit', { ...form.value, roles: [form.value.roles] })
+  // Emitimos directamente form.value que ya es de tipo UserInput
+  // Convertimos el rol seleccionado a un array si la propiedad 'roles' del formulario es un string
+  const dataToSubmit: UserInput = {
+    ...form.value,
+    roles: Array.isArray(form.value.roles) ? form.value.roles : [form.value.roles],
+  }
+  emit('submit', dataToSubmit)
 
   // Resetear el formulario después de enviar
   form.value = { ...initialFormState }
