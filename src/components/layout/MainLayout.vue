@@ -1,9 +1,6 @@
 <template>
   <div class="h-screen flex flex-col bg-gray-50 overflow-hidden relative">
-    <div
-      :class="{ 'opacity-40 pointer-events-none': showAuditModal }"
-      class="flex flex-1 overflow-hidden py-2"
-    >
+    <div class="flex flex-1 overflow-hidden py-2">
       <AppSidebar class="h-full overflow-hidden flex flex-col" />
       <main class="flex-1 overflow-hidden px-4 flex flex-col">
         <router-view v-slot="{ Component, route }" class="flex-1 overflow-hidden">
@@ -13,32 +10,24 @@
         </router-view>
       </main>
     </div>
-
-    <!-- Modal de auditoría -->
-    <ConfirmationModal
-      v-model="showAuditModal"
-      title="¿Iniciar auditoría?"
-      message="¿Desea iniciar en este momento el proceso de auditoría?"
-      confirmText="Sí"
-      cancelText="No"
-      @confirm="handleAuditConfirm"
-      @cancel="handleAuditCancel"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted } from 'vue' // 'ref' y 'useRouter' ya no son necesarios aquí si no se usan para otra cosa.
+import { useRouter } from 'vue-router' // Mantener useRouter si tus rutas lo necesitan para otra cosa.
 import { useAuthStore } from '@/stores/auth'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
-import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
+// Eliminamos la importación de ConfirmationModal, ya no es necesario.
+// import ConfirmationModal from '@/components/common/ConfirmationModal.vue' // <-- Eliminado
+// Eliminamos ref, ya no es necesario si showAuditModal es el único uso.
+// const showAuditModal = ref(false) // <-- Eliminado
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-const showAuditModal = ref(false)
-
+// Eliminamos estas funciones, ya no son necesarias.
+/*
 const getTodayDate = () => {
   const today = new Date()
   return today.toISOString().split('T')[0] // Solo la parte de la fecha
@@ -55,9 +44,14 @@ const handleAuditConfirm = () => {
 const handleAuditCancel = () => {
   showAuditModal.value = false
 }
+*/
 
 onMounted(() => {
-  const draft = localStorage.getItem('moduloDraft')
+  // Eliminamos toda la lógica de control del modal.
+  // La siguiente línea probablemente tampoco es necesaria si no hay otra lógica que la use.
+  // const draft = localStorage.getItem('moduloDraft')
+  // Toda la lógica que sigue en este onMounted se elimina
+  /*
   const storedDate = localStorage.getItem('auditAcceptedDate')
   const today = getTodayDate()
 
@@ -68,6 +62,7 @@ onMounted(() => {
       showAuditModal.value = true
     }
   }
+  */
 })
 </script>
 
