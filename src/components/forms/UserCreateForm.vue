@@ -6,7 +6,7 @@
       >
         <Transition name="modal-fade">
           <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div class="absolute inset-0 bg-gray-500 opacity-75" @click.self="closeModal"></div>
           </div>
         </Transition>
 
@@ -268,6 +268,11 @@ const submitForm = () => {
   // Resetear el formulario después de enviar
   form.value = { ...initialFormState }
   loading.value = false
+}
+
+// Función para cerrar el modal
+const closeModal = () => {
+  emit('close')
 }
 </script>
 
