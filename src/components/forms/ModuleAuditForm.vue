@@ -210,7 +210,19 @@
           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
           placeholder="Escriba aquí sus observaciones..."
         ></textarea>
-        <p v-else class="text-gray-500 italic mb-4">No hay observación registrada.</p>
+        <div class="mt-4">
+          <label for="observation-image-url" class="block text-sm font-medium text-gray-700 mb-1">
+            URL de la imagen (opcional)
+          </label>
+          <input
+            id="observation-image-url"
+            type="text"
+            v-if="currentSubtask?.observations?.[0]"
+            v-model="currentSubtask.observations[0].imageUrl"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-400 focus:border-gray-400 sm:text-sm bg-white text-gray-800"
+            placeholder="Pega la URL de la imagen aquí..."
+          />
+        </div>
 
         <div class="mt-5 flex justify-end space-x-3">
           <button
@@ -263,7 +275,13 @@ const currentTask = computed<Task | undefined>(() => {
 })
 
 const currentSubtask = computed<AuditSubTask | undefined>(() => {
-  return currentTask.value?.subtasks[currentSubtaskIndex.value]
+  const subtask = currentTask.value?.subtasks[currentSubtaskIndex.value]
+  // Si la subtask existe pero no tiene auditObservations, la inicializamos para reactividad.
+  // Idealmente, getInitialTasksForModule ya debería crear esta propiedad.
+  if (subtask && !('auditObservations' in subtask)) {
+    ;(subtask as AuditSubTask & { auditObservations?: AuditObservations[] }).auditObservations = []
+  }
+  return subtask
 })
 
 const incompleteTasksList = computed(() => {
@@ -297,6 +315,24 @@ const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
     try {
       const parsed = JSON.parse(stored)
       if (parsed && parsed.id === moduleId && parsed.tasks) {
+        // Al cargar desde localStorage, aseguramos que 'auditObservations' exista
+        // y que sus propiedades 'observationText' y 'imageUrl' sean strings.
+        parsed.tasks.forEach((task: Task) => {
+          task.subtasks.forEach((subtask: AuditSubTask) => {
+            if (!subtask.observations) {
+              subtask.observations = []
+            }
+            if (subtask.observations[0]) {
+              // Aseguramos que los campos de la primera observación sean strings, no undefined/null
+              if (typeof subtask.observations[0].observationText !== 'string') {
+                subtask.observations[0].observationText = ''
+              }
+              if (typeof subtask.observations[0].imageUrl !== 'string') {
+                subtask.observations[0].imageUrl = ''
+              }
+            }
+          })
+        })
         return parsed as AuditModules
       }
       throw new Error('Datos de módulo inválidos en localStorage.')
@@ -310,11 +346,21 @@ const loadFromLocalStorage = (moduleId: number): AuditModules | null => {
 }
 
 const initializeObservations = (subtask: AuditSubTask) => {
-  if (!subtask.observations || subtask.observations.length === 0) {
-    subtask.observations = [{ id: 1, observationText: '', imageUrl: '' }]
+  // Aseguramos que el array 'auditObservations' exista
+  if (!subtask.observations) {
+    subtask.observations = []
+  }
+
+  // Si el array está vacío o la primera observación no existe, la creamos
+  if (subtask.observations.length === 0 || !subtask.observations[0]) {
+    subtask.observations[0] = { id: 1, observationText: '', imageUrl: '' }
   } else {
-    if (!subtask.observations[0] || subtask.observations[0].observationText === undefined) {
-      subtask.observations[0] = { id: 1, observationText: '', imageUrl: '' }
+    // Si ya existe una observación, nos aseguramos de que sus propiedades sean strings
+    if (typeof subtask.observations[0].observationText !== 'string') {
+      subtask.observations[0].observationText = ''
+    }
+    if (typeof subtask.observations[0].imageUrl !== 'string') {
+      subtask.observations[0].imageUrl = ''
     }
   }
 }
@@ -331,6 +377,8 @@ const closeObservationModal = () => {
 }
 
 const saveObservation = () => {
+  // No hay lógica explícita aquí, ya que v-model maneja la actualización
+  // de las propiedades de la observación directamente.
   closeObservationModal()
 }
 
@@ -357,7 +405,7 @@ const goToPrevSubtask = () => {
 const goToNextTask = () => {
   if (currentSubModulo.value && currentTaskIndex.value < currentSubModulo.value.tasks.length - 1) {
     currentTaskIndex.value++
-    currentSubtaskIndex.value = 0
+    currentSubtaskIndex.value = 0 // Reinicia el índice de subtarea al cambiar de tarea
     if (currentSubtask.value) {
       initializeObservations(currentSubtask.value)
     }
@@ -368,7 +416,7 @@ const goToNextTask = () => {
 const goToPrevTask = () => {
   if (currentTaskIndex.value > 0) {
     currentTaskIndex.value--
-    currentSubtaskIndex.value = 0
+    currentSubtaskIndex.value = 0 // Reinicia el índice de subtarea al cambiar de tarea
     if (currentSubtask.value) {
       initializeObservations(currentSubtask.value)
     }
@@ -398,6 +446,7 @@ const guardarModulo = () => {
 
   let hasIncompleteTasksDetected = false
   for (const task of currentSubModulo.value.tasks) {
+    // Si una tarea no tiene subtareas, se considera completada por defecto.
     if (task.subtasks.length === 0) {
       task.isCompleted = true
       continue
@@ -405,17 +454,19 @@ const guardarModulo = () => {
 
     let allSubtasksAudited = true
     for (const subtask of task.subtasks) {
+      // Una subtarea se considera "auditada" si tiene al menos 1 muestra auditada.
       if (subtask.auditedSamples < 1) {
         allSubtasksAudited = false
         break
       }
     }
-    task.isCompleted = allSubtasksAudited
+    task.isCompleted = allSubtasksAudited // La tarea se completa si todas sus subtareas están auditadas
     if (!task.isCompleted) {
       hasIncompleteTasksDetected = true
     }
   }
 
+  // El módulo se completa si no hay ninguna tarea incompleta.
   currentSubModulo.value.isCompleted = !hasIncompleteTasksDetected
 
   if (hasIncompleteTasksDetected) {
@@ -444,24 +495,23 @@ watch(
       const loadedData = loadFromLocalStorage(newVal.id)
       if (loadedData) {
         currentSubModulo.value = loadedData
+        // Aseguramos que todas las subtareas cargadas tengan sus observaciones inicializadas
         currentSubModulo.value.tasks.forEach((task) => {
           task.subtasks.forEach((subtask) => {
             initializeObservations(subtask)
           })
         })
-        console.log('Datos de módulo cargados desde localStorage:', toRaw(loadedData)) // Adjusted log
+        console.log('Datos de módulo cargados desde localStorage:', toRaw(loadedData))
       } else {
         const initialTasks = getInitialTasksForModule(newVal.id)
         currentSubModulo.value = { ...newVal, tasks: initialTasks }
+        // Aseguramos que todas las subtareas del nuevo módulo tengan sus observaciones inicializadas
         currentSubModulo.value.tasks.forEach((task) => {
           task.subtasks.forEach((subtask) => {
             initializeObservations(subtask)
           })
         })
-        console.log(
-          'Módulo inicializado con tareas por defecto:', // Adjusted log
-          toRaw(currentSubModulo.value),
-        )
+        console.log('Módulo inicializado con tareas por defecto:', toRaw(currentSubModulo.value))
       }
       currentTaskIndex.value = 0
       currentSubtaskIndex.value = 0
@@ -486,9 +536,11 @@ watch(
 </script>
 
 <style scoped>
+/* Transición del modal principal */
+/* Aplicada al div directamente envuelto por <Transition name="modal"> */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s ease; /* Transición más corta y solo opacidad */
+  transition: opacity 0.3s ease; /* Solo opacidad para el contenedor general (fondo incluido) */
 }
 
 .modal-enter-from,
@@ -496,7 +548,6 @@ watch(
   opacity: 0;
 }
 
-/* Para 'modal-enter-to' y 'modal-leave-from' ya no necesitas el 'transform: scale(1)' */
 .modal-enter-to,
 .modal-leave-from {
   opacity: 1;

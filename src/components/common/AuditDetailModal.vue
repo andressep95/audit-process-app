@@ -9,21 +9,28 @@
         <div class="p-6 overflow-y-auto flex-grow">
           <AuditSummaryCard :auditData="processedAuditData" />
 
-          <div v-if="processedAuditData" class="mt-6 border-t border-gray-200 pt-6">
+          <div
+            v-if="
+              processedAuditData &&
+              processedAuditData.auditModules &&
+              processedAuditData.auditModules.length > 0
+            "
+            class="mt-6 border-t border-gray-200 pt-6"
+          >
             <div class="relative">
               <Transition name="fade" mode="out-in">
                 <AuditModuleDetail
-                  v-if="
-                    processedAuditData.auditModules &&
-                    processedAuditData.auditModules[currentModuleIndex]
+                  v-if="processedAuditData.auditModules[currentModuleIndex]"
+                  :key="
+                    processedAuditData.auditModules[currentModuleIndex].id ??
+                    processedAuditData.auditModules[currentModuleIndex].moduleName
                   "
-                  :key="processedAuditData.auditModules[currentModuleIndex].id"
                   :moduleData="processedAuditData.auditModules[currentModuleIndex]"
                 />
               </Transition>
 
               <div
-                v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
+                v-if="processedAuditData.auditModules.length > 1"
                 class="absolute inset-y-0 left-0 flex items-center"
               >
                 <button
@@ -48,7 +55,7 @@
                 </button>
               </div>
               <div
-                v-if="processedAuditData.auditModules && processedAuditData.auditModules.length > 1"
+                v-if="processedAuditData.auditModules.length > 1"
                 class="absolute inset-y-0 right-0 flex items-center"
               >
                 <button
@@ -75,7 +82,7 @@
             </div>
             <div class="text-center text-sm text-gray-500 mt-4">
               Módulo {{ currentModuleIndex + 1 }} de
-              {{ processedAuditData.auditModules ? processedAuditData.auditModules.length : 0 }}
+              {{ processedAuditData.auditModules.length }}
             </div>
           </div>
           <div v-else class="text-center text-gray-500 py-10">Cargando datos de auditoría...</div>
@@ -87,7 +94,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from 'vue'
-import type { AuditHeaders, AuditModules, Task, AuditSubTask } from '@/models/models'
+import type { AuditReadHeaders, AuditReadModule, AuditReadTask } from '@/models/audit-read-models' // Adjust path if needed
 import AuditSummaryCard from './AuditSummaryCard.vue'
 import AuditModuleDetail from './AuditModuleDetail.vue'
 import dayjs from 'dayjs'
@@ -99,30 +106,29 @@ dayjs.locale('es')
 
 const props = defineProps<{
   show: boolean
-  auditData: AuditHeaders | null
+  auditData: AuditReadHeaders | null
 }>()
 
 const emit = defineEmits(['close'])
 
 const currentModuleIndex = ref(0)
-const processedAuditData = ref<AuditHeaders | null>(null)
+const processedAuditData = ref<AuditReadHeaders | null>(null)
 
-interface BackendAuditModule extends AuditModules {
-  auditTasks?: (Task & {
-    auditSubtasks?: (AuditSubTask & {
-      auditObservations?: any[]
-    })[]
-  })[]
+const parseCode = (code: string) => {
+  if (typeof code === 'string') {
+    return code.split('.').map(Number)
+  }
+  return [0]
 }
-
-const parseCode = (code: string) => code.split('.').map(Number)
 
 watch(
   () => props.auditData,
   (newData) => {
     if (newData) {
-      const dataCopy: AuditHeaders = JSON.parse(JSON.stringify(newData))
+      // Use JSON.parse(JSON.stringify()) for deep cloning, which handles non-serializable objects better
+      const dataCopy: AuditReadHeaders = JSON.parse(JSON.stringify(newData))
 
+      // Date parsing logic
       if (dataCopy.auditDate) {
         let parsedDate = dayjs(dataCopy.auditDate)
         if (!parsedDate.isValid()) {
@@ -138,10 +144,11 @@ watch(
         }
       }
 
+      // Sort modules and tasks
       if (dataCopy.auditModules) {
-        ;(dataCopy.auditModules as BackendAuditModule[]).forEach((module) => {
+        dataCopy.auditModules.forEach((module: AuditReadModule) => {
           if (module.auditTasks) {
-            module.auditTasks.sort((a, b) => {
+            module.auditTasks.sort((a: AuditReadTask, b: AuditReadTask) => {
               const codeA = parseCode(a.taskCode)
               const codeB = parseCode(b.taskCode)
 
@@ -156,12 +163,12 @@ watch(
             })
           }
         })
-
         dataCopy.auditModules.sort((a, b) => {
           return (a.moduleName || '').localeCompare(b.moduleName || '')
         })
       }
       processedAuditData.value = dataCopy
+      // Reset index only if new data arrives and there are modules
       currentModuleIndex.value = 0
     } else {
       processedAuditData.value = null
@@ -173,6 +180,7 @@ watch(
 watch(
   () => props.show,
   (newVal) => {
+    // Only reset currentModuleIndex if the modal is shown AND there is processed data
     if (newVal && processedAuditData.value) {
       currentModuleIndex.value = 0
     }
@@ -192,6 +200,7 @@ const prevModule = () => {
 const nextModule = () => {
   if (
     processedAuditData.value &&
+    processedAuditData.value.auditModules &&
     currentModuleIndex.value < processedAuditData.value.auditModules.length - 1
   ) {
     currentModuleIndex.value++
@@ -200,49 +209,40 @@ const nextModule = () => {
 </script>
 
 <style scoped>
-/* Transición del modal principal */
-/* Aplicada al div directamente envuelto por <Transition name="modal"> */
+/* Modal transitions as before */
 .modal-enter-active,
 .modal-leave-active {
-  transition: opacity 0.3s ease; /* Solo opacidad para el contenedor general (fondo incluido) */
+  transition: opacity 0.3s ease;
 }
-
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;
 }
-
 .modal-enter-to,
 .modal-leave-from {
   opacity: 1;
 }
 
-/* Animación para el contenido del modal (el cuadro blanco) */
-/* Asegúrate de que el div del contenido tenga la clase 'modal-content' en tu HTML */
 .modal-enter-active .modal-content,
 .modal-leave-active .modal-content {
   transition:
     transform 0.3s ease-out,
-    opacity 0.3s ease-out; /* Animación de escala y opacidad */
+    opacity 0.3s ease-out;
 }
-
 .modal-enter-from .modal-content {
-  transform: scale(0.9); /* Empieza un poco más pequeño */
-  opacity: 0; /* Empieza invisible */
+  transform: scale(0.9);
+  opacity: 0;
 }
-
 .modal-leave-to .modal-content {
-  transform: scale(0.9); /* Termina un poco más pequeño */
-  opacity: 0; /* Termina invisible */
+  transform: scale(0.9);
+  opacity: 0;
 }
-
 .modal-enter-to .modal-content,
 .modal-leave-from .modal-content {
   transform: scale(1);
   opacity: 1;
 }
 
-/* La transición 'fade' para los módulos internos está bien como está */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
