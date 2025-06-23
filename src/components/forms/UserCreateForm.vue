@@ -258,13 +258,13 @@ const initialFormState: UserInput = {
   lastName: '',
   password: '',
   enabled: true,
-  roles: ['USER'], // Inicializa roles como un array, ya que UserInput lo requiere así
+  roles: ['JEFE_TIENDA'], // Inicializa roles como un array, ya que UserInput lo requiere así
 }
 
 const form = ref<UserInput>({ ...initialFormState }) // Aseguramos que 'form' es de tipo UserInput
 const loading = ref(false)
 const showPassword = ref(false)
-const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN']
+const availableRoles = ['AUDITOR', 'JEFE_TIENDA']
 
 const submitForm = () => {
   loading.value = true

@@ -184,7 +184,7 @@ const form = ref({
 })
 
 const loading = ref(false)
-const availableRoles = ['USER', 'AUDITOR', 'JEFE_TIENDA', 'ADMIN'] // Asegúrate de que esta lista sea correcta para tus roles
+const availableRoles = ['AUDITOR', 'JEFE_TIENDA'] // Asegúrate de que esta lista sea correcta para tus roles
 
 // Observador para la prop userData
 watch(
