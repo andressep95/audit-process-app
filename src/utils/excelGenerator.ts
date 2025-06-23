@@ -1,4 +1,3 @@
-// src/utils/excelGenerator.ts
 import ExcelJS from 'exceljs'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
@@ -49,7 +48,7 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
     { header: 'Fecha Auditoría', key: 'auditDate', width: 15 },
     { header: '% Cumplimiento General', key: 'compliancePercentage', width: 20 },
     { header: 'Calificación General', key: 'overallRating', width: 20 },
-    { header: 'Observaciobes', key: 'observations', width: 20 },
+    { header: 'Observaciones Generales', key: 'observations', width: 40 },
   ]
 
   // Estilos para la cabecera de la tabla de resumen
@@ -74,7 +73,7 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
   })
 
   audits.forEach((audit) => {
-    summarySheet.addRow({
+    const row = summarySheet.addRow({
       auditId: audit.country + '-' + audit.storeName + '-' + formatDate(audit.auditDate), // Genera un ID simple
       country: audit.country,
       storeName: audit.storeName,
@@ -86,46 +85,33 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
       overallRating: audit.overallRating,
       observations: audit.observations || 'N/A',
     })
-  })
 
-  summarySheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 1) {
-      // Ignorar la fila de cabecera
-      row.eachCell((cell) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' },
-        }
-        cell.alignment = {
-          vertical: 'middle',
-          horizontal: 'center',
-          wrapText: true,
-        }
-      })
-    }
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' },
+      }
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+    })
   })
 
   summarySheet.eachRow((row) => {
     row.height = 20 // Altura mínima
 
-    // Recorrer cada celda de la fila para ajustar la altura si es necesario
     row.eachCell((cell) => {
-      // Solo ajustar si la celda tiene 'wrapText' activado y tiene un valor
       if (cell.alignment?.wrapText && cell.value) {
-        let columnWidth = 10 // Valor por defecto si no se puede obtener el ancho de la columna
+        let columnWidth = 10
 
         if (typeof cell.col === 'object' && cell.col !== null && 'width' in cell.col) {
           columnWidth = (cell.col as ExcelJS.Column).width || 10
         }
 
         const textLength = String(cell.value).length
-        const charsPerLine = Math.floor(columnWidth / 0.7) // Aproximación de caracteres por línea
+        const charsPerLine = Math.floor(columnWidth / 0.7)
         const lines = Math.ceil(textLength / charsPerLine)
-        if (lines > 1) {
-          row.height = Math.max(row.height, lines * 15) // Ajusta la altura de la fila
-        }
+        row.height = Math.min(60, Math.max(20, lines * 15)) // Limitar altura máxima de fila
       }
     })
   })
@@ -134,15 +120,9 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
   for (const audit of audits) {
     // Generar un nombre de hoja válido y único
     const sheetName = `${audit.storeName.substring(0, 15)}-${formatDate(audit.auditDate)}`
-    const sheet = workbook.addWorksheet(sheetName.replace(/[/\?*\[\]]/g, '')) // Limpiar caracteres no válidos para nombres de hoja
+    const sheet = workbook.addWorksheet(sheetName.replace(/[/\?*\[\]]/g, ''))
 
-    // Encabezados de la auditoría
-    sheet.mergeCells('A1:B1')
-    sheet.getCell('A1').value = 'Detalles de Auditoría'
-    sheet.getCell('A1').font = { bold: true, size: 14 }
-    sheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' }
-
-    let currentRow = 3
+    let currentRow = 1
     sheet.getCell(`A${currentRow}`).value = 'País:'
     sheet.getCell(`B${currentRow}`).value = audit.country
     currentRow++
@@ -170,73 +150,94 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
     currentRow++
     sheet.getCell(`A${currentRow}`).value = 'Calificación General:'
     sheet.getCell(`B${currentRow}`).value = audit.overallRating
-    currentRow += 2 // Espacio antes de la tabla de detalles
+    currentRow += 2 // Espacio antes de la sección de detalles de módulos/tareas
 
-    // Definición de columnas para la tabla de detalles
-    sheet.columns = [
-      { header: 'Módulo', key: 'moduleName', width: 25 },
-      { header: '% Cumplimiento Módulo', key: 'moduleCompliance', width: 20 },
-      { header: 'Calificación Módulo', key: 'moduleRating', width: 18 },
-      { header: 'Código Tarea', key: 'taskCode', width: 15 },
-      { header: 'Descripción Tarea', key: 'taskDescription', width: 40 },
-      { header: '% Cumplimiento Tarea', key: 'taskCompliance', width: 20 },
-      { header: 'Calificación Tarea', key: 'taskRating', width: 18 },
-      { header: 'Código Requerimiento', key: 'subtaskCode', width: 20 },
-      { header: 'Descripción Requerimiento', key: 'subtaskDescription', width: 50 },
-      { header: 'Nivel de Riesgo', key: 'riskLevel', width: 15 },
-      { header: 'Muestras Auditadas', key: 'auditedSamples', width: 18 },
-      { header: 'Errores Encontrados', key: 'errorsFound', width: 18 },
-      { header: '% Error', key: 'errorPercentage', width: 12 },
-      { header: '% Cumplimiento Requerimiento', key: 'subtaskCompliance', width: 25 },
-      { header: 'Observación', key: 'observationText', width: 40 },
+    // Definición de columnas para la tabla de detalles (UNA SOLA VEZ por hoja)
+    const detailColumns = [
+      { header: 'Tarea', key: 'taskDescription', width: 30 },
+      { header: 'Código', key: 'combinedCode', width: 15 },
+      { header: 'Requerimiento', key: 'subtaskDescription', width: 40 },
+      { header: 'Riesgo', key: 'riskLevel', width: 10 },
+      { header: 'Muestras', key: 'auditedSamples', width: 10 },
+      { header: 'Errores', key: 'errorsFound', width: 10 },
+      { header: '% Error', key: 'errorPercentage', width: 10 },
+      { header: '% Cumplimiento', key: 'taskCompliance', width: 15 },
+      { header: 'Calificación', key: 'taskRating', width: 12 },
+      { header: 'Observaciones', key: 'observationText', width: 30 },
     ]
+    // Asignar ancho de columnas manualmente SIN generar encabezado automático
+    detailColumns.forEach((col, index) => {
+      const columnLetter = String.fromCharCode('A'.charCodeAt(0) + index)
+      const column = sheet.getColumn(columnLetter)
+      column.width = col.width
+    })
 
-    // Aplicar estilos a la cabecera de la tabla de detalles
-    sheet.getRow(currentRow).eachCell((cell) => {
-      cell.fill = {
+    // Llenar datos de módulos, tareas, subtareas y observaciones
+    audit.auditModules?.forEach((module: AuditReadModule) => {
+      // Obtener la última letra de columna para fusionar
+      const lastColumnLetter = String.fromCharCode('A'.charCodeAt(0) + detailColumns.length - 1)
+
+      // Agregar fila para el módulo (fusionando celdas para el título del módulo)
+      sheet.mergeCells(`A${currentRow}:${lastColumnLetter}${currentRow}`)
+      const moduleCell = sheet.getCell(`A${currentRow}`)
+      moduleCell.value = `Módulo: ${module.moduleName} - Cumplimiento: ${module.compliancePercentage}% - Calificación: ${module.overallRating}`
+
+      // Aplicar estilo a la fila del módulo (negrita y un color de fondo diferente)
+      moduleCell.font = { bold: true, size: 11 }
+      moduleCell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFD9E1F2' }, // Un azul claro
+        fgColor: { argb: 'FFF0F0F0' }, // Un gris claro
       }
-      cell.font = {
-        bold: true,
-        color: { argb: 'FF000000' }, // Negro
-        size: 10,
-      }
-      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
-      cell.border = {
+      moduleCell.alignment = { vertical: 'middle', horizontal: 'center' }
+      moduleCell.border = {
         top: { style: 'thin' },
         left: { style: 'thin' },
         bottom: { style: 'thin' },
         right: { style: 'thin' },
       }
-    })
-    currentRow++
+      currentRow++ // Mover a la siguiente fila después del título del módulo
 
-    // Llenar datos de módulos, tareas, subtareas y observaciones
-    audit.auditModules?.forEach((module: AuditReadModule) => {
-      module.auditTasks.forEach((task: AuditReadTask) => {
+      // Aplicar estilos a la cabecera de la tabla de detalles (para este módulo)
+      // Esta es la fila de encabezados que SÍ quieres que aparezca por cada módulo.
+      const headerRow = sheet.addRow(detailColumns.map((col) => col.header))
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD9E1F2' },
+        }
+        cell.font = {
+          bold: true,
+          color: { argb: 'FF000000' },
+          size: 10,
+        }
+        cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' },
+        }
+      })
+      currentRow++ // Incrementar después de añadir la fila de encabezados
+
+      for (const task of module.auditTasks) {
         if (task.auditSubtasks.length === 0) {
-          // Si una tarea no tiene subtareas, se añade como una fila con campos vacíos para la subtarea
-          const row = sheet.addRow({
-            moduleName: module.moduleName,
-            moduleCompliance: module.compliancePercentage,
-            moduleRating: module.overallRating,
-            taskCode: task.taskCode,
-            taskDescription: task.procedureDescription,
-            taskCompliance: task.compliancePercentage,
-            taskRating: task.taskRating,
-            subtaskCode: '',
-            subtaskDescription: '',
-            riskLevel: '',
-            auditedSamples: '',
-            errorsFound: '',
-            errorPercentage: '',
-            subtaskCompliance: '',
-            subtaskIsCompleted: task.isCompleted ? 'OK' : 'Pendiente',
-            observationText: '',
-            imageUrl: '',
-          })
+          // Modificado para pasar un array de valores
+          const row = sheet.addRow([
+            task.procedureDescription, // Tarea
+            task.taskCode, // Código
+            'N/A', // Requerimiento
+            'N/A', // Riesgo
+            'N/A', // Muestras
+            'N/A', // Errores
+            'N/A', // % Error
+            task.compliancePercentage + '%', // % Cumplimiento (de la tarea)
+            task.taskRating, // Calificación (de la tarea)
+            'N/A', // % Cumplimiento Req.
+            '', // Observaciones
+          ])
           row.eachCell((cell) => {
             cell.border = {
               top: { style: 'thin' },
@@ -244,35 +245,24 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
               bottom: { style: 'thin' },
               right: { style: 'thin' },
             }
+            cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
           })
           currentRow++
         } else {
-          task.auditSubtasks.forEach((subtask: AuditReadSubTask) => {
-            const rowData = {
-              moduleName: module.moduleName,
-              moduleCompliance: module.compliancePercentage,
-              moduleRating: module.overallRating,
-              taskCode: task.taskCode,
-              taskDescription: task.procedureDescription,
-              taskCompliance: task.compliancePercentage,
-              taskRating: task.taskRating,
-              subtaskCode: subtask.requerimentCode,
-              subtaskDescription: subtask.procedureDescription,
-              riskLevel: subtask.riskLevel,
-              auditedSamples: subtask.auditedSamples,
-              errorsFound: subtask.errorsFound,
-              errorPercentage: subtask.errorPercentage,
-              subtaskCompliance: subtask.compliancePercentage,
-              subtaskIsCompleted: subtask.isCompleted ? 'OK' : 'Pendiente',
-              observationText:
-                subtask.auditObservations?.map((obs) => obs.observationText).join('; ') || '',
-              imageUrl:
-                subtask.auditObservations
-                  ?.map((obs) => obs.imageUrl)
-                  .filter(Boolean)
-                  .join('; ') || '',
-            }
-            const row = sheet.addRow(rowData)
+          for (const subtask of task.auditSubtasks) {
+            // Modificado para pasar un array de valores
+            const row = sheet.addRow([
+              task.procedureDescription, // Tarea
+              task.taskCode + '.' + subtask.requerimentCode, // Código
+              subtask.procedureDescription, // Requerimiento
+              subtask.riskLevel, // Riesgo
+              subtask.auditedSamples, // Muestras
+              subtask.errorsFound, // Errores
+              subtask.errorPercentage + '%', // % Error
+              subtask.compliancePercentage + '%', // % Cumplimiento (de la tarea)
+              task.taskRating, // Calificación (de la tarea)              ,
+              subtask.auditObservations?.map((obs) => obs.observationText).join('; ') || '', // Observaciones
+            ])
 
             row.eachCell((cell) => {
               cell.border = {
@@ -281,56 +271,28 @@ export async function generateAuditsExcel(audits: AuditReadHeaders[]) {
                 bottom: { style: 'thin' },
                 right: { style: 'thin' },
               }
-              // Ajustar alineación para celdas de texto largo
-              const colLetterMatch = cell.address.match(/[A-Z]+/)
-              if (colLetterMatch && colLetterMatch[0]) {
-                const colNum = columnLetterToNumber(colLetterMatch[0])
-                const colDef = sheet.columns[colNum - 1]
-
-                if (
-                  colDef &&
-                  (colDef.key === 'observationText' ||
-                    colDef.key === 'imageUrl' ||
-                    colDef.key === 'taskDescription' ||
-                    colDef.key === 'subtaskDescription')
-                ) {
-                  cell.alignment = { wrapText: true, vertical: 'top' }
-                } else {
-                  cell.alignment = { vertical: 'middle', horizontal: 'center' }
-                }
-              }
+              cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
             })
             currentRow++
-          })
+          }
         }
-      })
+      }
+      currentRow++ // Añadir una fila vacía para separar visualmente los módulos
     })
 
-    // Ajustar altura de fila para las filas con texto envuelto
+    // Ajustar altura de fila y limitar la altura máxima para esta hoja
     sheet.eachRow((row) => {
       row.height = 20 // Altura mínima
-
-      // Recorrer cada celda de la fila para ajustar la altura si es necesario
       row.eachCell((cell) => {
-        // Solo ajustar si la celda tiene 'wrapText' activado y tiene un valor
         if (cell.alignment?.wrapText && cell.value) {
-          let columnWidth = 10 // Valor por defecto si no se puede obtener el ancho de la columna
-
-          // *** INICIO DE LA CORRECCIÓN ROBUSTA PARA EL ERROR 'width' ***
-          // Verificamos explícitamente que cell.col es un objeto y tiene la propiedad 'width'.
-          // Usamos 'in cell.col' para asegurarnos que la propiedad existe antes de acceder a ella,
-          // y luego un type assertion (as ExcelJS.Column) para decirle a TypeScript lo que esperamos.
+          let columnWidth = 10
           if (typeof cell.col === 'object' && cell.col !== null && 'width' in cell.col) {
             columnWidth = (cell.col as ExcelJS.Column).width || 10
           }
-          // *** FIN DE LA CORRECCIÓN ROBUSTA ***
-
           const textLength = String(cell.value).length
-          const charsPerLine = Math.floor(columnWidth / 0.7) // Aproximación de caracteres por línea
+          const charsPerLine = Math.floor(columnWidth / 0.7)
           const lines = Math.ceil(textLength / charsPerLine)
-          if (lines > 1) {
-            row.height = Math.max(row.height, lines * 15) // Ajusta la altura de la fila
-          }
+          row.height = Math.max(20, lines * 15) // Limitar la altura máxima a 60
         }
       })
     })
