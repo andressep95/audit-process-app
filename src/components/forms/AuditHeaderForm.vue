@@ -148,7 +148,7 @@ import type { AuditHeaders } from '@/models/models'
 const emit = defineEmits(['guardado', 'cerrar'])
 const props = defineProps<{
   auditHeaders: AuditHeaders
-  show: Boolean
+  show: boolean
 }>()
 
 const internalAuditHeaders = ref<AuditHeaders>({ ...props.auditHeaders })

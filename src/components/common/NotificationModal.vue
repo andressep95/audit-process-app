@@ -6,7 +6,7 @@
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
         <Transition name="modal-fade">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div v-if="show" class="fixed inset-0 transition-opacity" aria-hidden="true">
             <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
           </div>
         </Transition>
@@ -49,7 +49,7 @@
   </Transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
@@ -64,7 +64,7 @@ const props = defineProps({
   message: String,
 })
 
-const emit = defineEmits(['close'])
+defineEmits(['close'])
 
 const iconComponent = computed(() =>
   props.type === 'success' ? CheckCircleIcon : ExclamationCircleIcon,

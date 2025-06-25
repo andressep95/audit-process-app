@@ -5,7 +5,7 @@
         class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
       >
         <Transition name="modal-fade">
-          <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div v-if="show" class="fixed inset-0 transition-opacity" aria-hidden="true">
             <div class="absolute inset-0 bg-gray-500 opacity-75" @click.self="closeModal"></div>
           </div>
         </Transition>
@@ -236,52 +236,53 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { UserInput } from '@/models/User' // Asegúrate de que la ruta sea correcta para UserInput
+import { ref, watch } from 'vue'
+import type { UserInput } from '@/models/User'
 
 const props = defineProps({
   show: Boolean,
 })
 
-// Define explícitamente los eventos que el componente puede emitir
 const emit = defineEmits<{
-  (e: 'submit', userData: UserInput): void // El evento 'submit' ahora emite un objeto de tipo UserInput
+  (e: 'submit', userData: UserInput): void
   (e: 'close'): void
 }>()
 
-// Formulario inicial
+// Estado inicial limpio
 const initialFormState: UserInput = {
-  // Aseguramos que el estado inicial cumpla con UserInput
   username: '',
   email: '',
   firstName: '',
   lastName: '',
   password: '',
   enabled: true,
-  roles: ['JEFE_TIENDA'], // Inicializa roles como un array, ya que UserInput lo requiere así
+  roles: ['JEFE_TIENDA'], // Rol por defecto
 }
 
-const form = ref<UserInput>({ ...initialFormState }) // Aseguramos que 'form' es de tipo UserInput
+const form = ref<UserInput>({ ...initialFormState })
 const loading = ref(false)
 const showPassword = ref(false)
 const availableRoles = ['AUDITOR', 'JEFE_TIENDA']
 
+// Resetear el formulario cada vez que se abre el modal
+watch(() => props.show, (isVisible) => {
+  if (isVisible) {
+    form.value = { ...initialFormState }
+  }
+})
+
 const submitForm = () => {
   loading.value = true
-  // Emitimos directamente form.value que ya es de tipo UserInput
-  // Convertimos el rol seleccionado a un array si la propiedad 'roles' del formulario es un string
   const dataToSubmit: UserInput = {
     ...form.value,
     roles: Array.isArray(form.value.roles) ? form.value.roles : [form.value.roles],
   }
   emit('submit', dataToSubmit)
-
-  // Resetear el formulario después de enviar
-  form.value = { ...initialFormState }
+  
+  // No resetear aquí para evitar parpadeo en el modal
   loading.value = false
 }
 
-// Función para cerrar el modal
 const closeModal = () => {
   emit('close')
 }
