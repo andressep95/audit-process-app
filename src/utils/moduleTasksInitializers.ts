@@ -24,6 +24,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Debe utilizar planilla Excel "Planilla para Conteo", para realizar el scan de los SKU´s involucrados, en esta planilla se debe pegar el stock teórico de los Sku´s seleccionados para la muestra de auditoría, de debe revisar que las fórmulas estén actualizadas y se procede al conteo físico en Sala, Bodega o trastienda, también se debe considerar los productos en estado de segunda a los cuales no tengan el traspaso de almacén correspondiente, lo mismo debe ser considerado para los productos en estado de merma que no han sido procesados.',
               observations: [],
             },
             {
@@ -60,6 +61,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Verificar que la merma almacenada esté informada a Control de Existencia. Esto se revisar en libro de registro de mermas, si la merma física ya fue informada y no ha sido destruida, esto afecta negativamente a la tienda (Tienda deberá tener levantada la ficha de calidad y el correo de respaldo en caso que sea merma de calidad). Y se deberá levantar al área comercial, posterior a la revisión de auditoría, para gestión de los productos en espera si no se ha dado respuesta a la tienda.',
               observations: [],
             },
             {
@@ -73,6 +75,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'En el panel web (Easy Store) ingresar  identificar la tienda a auditar, ingresar a la opción mermas, seleccionar el período por auditar (3 semanas), y revisar que se estén registrando las mermas y que cuenten con el respaldo fotográfico y documental',
               observations: [],
             },
             {
@@ -85,6 +88,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Si la tienda cuenta con stock sistémico (para el almacén 0092) se debe seleccionar una muestra y revisar que se cumplan los criterios definidos en la PPT sobre Disposición de Mermas y Segunda Selección. Día jueves debería enviarse correo de traspaso (manual) a zonal correspondiente.',
               observations: [],
             },
           ],
@@ -211,9 +215,8 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
           ],
         },
       ]
-    case 2: // Administracion - Replicar estructura similar
+    case 2: // Administracion
       return [
-        // Tareas para el módulo de Administracion
         {
           id: 1,
           taskCode: 'A',
@@ -310,9 +313,8 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
           ],
         },
       ]
-    case 3: // TI Mantencion - Replicar estructura similar
+    case 3: // TI Mantencion
       return [
-        // Tareas para el módulo de TI Mantencion
         {
           id: 1,
           taskCode: 'A',
@@ -471,9 +473,8 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
           ],
         },
       ]
-    case 4: // RR.HH - SSO - Replicar estructura similar
+    case 4: // RR.HH - SSO
       return [
-        // Tareas para el módulo de RR.HH - SSO
         {
           id: 1,
           taskCode: 'A',
@@ -493,6 +494,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Validar reporte extraido de Buk (documentos pendientes de firma) v/s lo que le muestra el jefe de tienda (debe mostrar documento firmado por el trabajador). Ciclo de vida envía correo dando estatus (al menos quincenal), por lo cual no se puede desconocer en tienda si existen pendientes de firma',
               observations: [],
             },
             {
@@ -506,6 +508,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Ingresar a Geovictoria y validar que los colaboradores que realizan horas extras cumplen con la ley, además verificar que estas HE fueron autorizadas a través de correo por el Jefe Zonal, revisar 4 semanas (colaboradores con jornada PT20C no pueden realizar horas extras).',
               observations: [],
             },
             {
@@ -634,9 +637,8 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
           ],
         },
       ]
-    case 5: // Recaudacion - Replicar estructura similar
+    case 5: // Recaudacion
       return [
-        // Tareas para el módulo de Recaudacion
         {
           id: 1,
           taskCode: 'A',
@@ -656,6 +658,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Realizar un arqueo al o los Fondos de Sencillo que se encuentran en la tienda, tolerancia de desviación $500 (monto superior esta descuadrado), realizar una inspección visual del lugar en que se encuentra el dinero (si una caja aun no abre, la dotación debe estar en caja fuerte no en la gaveta).',
               observations: [],
             },
             {
@@ -669,6 +672,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Revisar carpeta que se encuentra en Drive (Respaldo de Folio - Arqueo Sencillo) y validar si se realizaron las cuadraturas todos los días (revisar 20 dias), además analizar si existen variaciones muy grandes de billetes de $1000 y preguntar que paso (las tiendas tienen prohibido ir a cambiar dinero al banco o con una persona externa a menos que sea autorizado a través de correo por el Jefe Zonal). Importante: si la información se encuentra en una carpeta distinta a la creada por Folios,  el punto no cumple.',
               observations: [],
             },
             {
@@ -681,6 +685,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Verificar que el Fondo de Sencillo del mes anterior este depositado, validar en drive comprobante de recepción de valores y comprobante de depósito, revisar 4 meses hacia atrás (los comprobantes deben estar ordenados y resguardados en la carpeta del mes al que corresponden.  Importante: si la información se encuentra en una carpeta distinta a la creada por Folios, el punto no cumple.',
               observations: [],
             },
           ],
@@ -704,6 +709,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Verificar a través del Folio o en la página de Brinks que los comprobantes de depósito no sean superior a $200.000, además revisar la hora en que se realizan estos depósitos por que en algunas ocasiones acumulan en caja más del dinero permitido, pero lo depositan en forma separada. se debe revisar dos semanas.',
               observations: [],
             },
             {
@@ -717,6 +723,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Revisar los talonarios de las notas de pedido que debería tener la tienda, verificar si se ha usado algún documento ( en este caso ver  si se encuentra respaldada en drive -planilla Notas de Pedido) si  existe un documento nulo este debe estar con todas sus copias . B.2.2 Validar que el comprobante de la NC física esté firmada por el cliente, por el jefe/encargado de zona (NC), y tener el documento de respaldo de la anulación (boleta completa si es anulación total o fotocopia si es parcial). El folio debe estar guardado al igual que en tocornal (Deben estar en sobres, por día/mes, con sus correspondientes comprobantes. Importante: si la información se encuentra en una carpeta distinta a la creada por Folios,  el punto no cumple. Adicionalmente si se tiene dudas respecto del proceso o no hay evidencia clara de firmas por parte de supervisor directo, se recomienda efectuar procedimiento de revisión de cámaras para corroborar.',
               observations: [],
             },
             {
@@ -730,6 +737,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Revisar el Folio o BO Central y validar que las cuadraturas de cierre de caja no presenten diferencias (no considerar voucher de debito y crédito), revisar 7 días. Si hay un faltante, validar que éste haya sido enviado. Debe ser enviado a más tardar el día siguiente am por correo (desde los 100 pesos). Inmediatamente debería firmar la hoja de autorización de descuento y enviarla a folio.',
               observations: [],
             },
             {
@@ -743,6 +751,7 @@ export function getInitialTasksForModule(moduleId: number): Task[] {
               errorPercentage: 0,
               compliancePercentage: 0,
               isCompleted: false,
+              visualAid: 'Identificar quienes tienen tarjeta de supervisor y validar a través de Bo Central que los días que estos colaboradores tuvieron día libre su tarjeta no se utilizó (validar tarjeta de 3 colaboradores).',
               observations: [],
             },
           ],

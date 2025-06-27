@@ -55,10 +55,22 @@
                 :key="currentSubtask.id"
                 class="mb-4 bg-gray-50 p-5 rounded-lg border border-gray-100 shadow-inner"
               >
-                <p class="text-base text-gray-800 font-medium mb-3">
-                  {{ currentTask?.taskCode }}.{{ currentSubtask?.requerimentCode }}
-                  {{ currentSubtask?.procedureDescription }}
-                </p>
+                <div class="flex items-start justify-between mb-3">
+                  <p class="text-base text-gray-800 font-medium">
+                    {{ currentTask?.taskCode }}.{{ currentSubtask?.requerimentCode }}
+                    {{ currentSubtask?.procedureDescription }}
+                  </p>
+<button
+  v-if="currentSubtask?.visualAid"
+  @click.stop="openVisualAidModal(currentSubtask.visualAid)"
+  class="ml-2 w-7 h-7 flex items-center justify-center rounded-full border-2 border-gray-400 bg-white text-gray-600 hover:bg-gray-100 hover:text-gray-900 font-bold transition-all shadow-sm p-0 aspect-square"
+  title="Ayuda visual"
+  style="min-width: 1.75rem; line-height: 1;"
+>
+  ?
+</button>
+                </div>
+
                 <p class="text-sm text-gray-600 mb-4">
                   Nivel de Riesgo: <span class="font-semibold">{{ currentSubtask.riskLevel }}</span>
                 </p>
@@ -243,6 +255,31 @@
       </div>
     </div>
   </Transition>
+
+  <Transition name="modal" appear>
+    <div
+      v-if="showVisualAidModal"
+      class="fixed inset-0 bg-gray-900 bg-opacity-40 flex justify-center items-center z-[120] p-4"
+      @click.self="closeVisualAidModal"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full relative border border-gray-100">
+        <h5 class="text-lg font-semibold mb-4 text-gray-800">Ayuda Visual</h5>
+        <p class="text-sm text-gray-700 whitespace-pre-line">
+          {{ currentVisualAidContent }}
+        </p>
+        <div class="mt-6 flex justify-end">
+          <button
+            type="button"
+            @click="closeVisualAidModal"
+            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
+
 </template>
 
 <script setup lang="ts">
@@ -441,7 +478,7 @@ const cerrarModalYGuardar = () => {
 }
 
 const guardarModulo = () => {
-  if (!currentSubModulo.value) return
+  if (!currentSubModulo.value || showVisualAidModal.value || showObservationModal.value) return;
 
   currentSubModulo.value = calculateModuleCompliance(currentSubModulo.value)
 
@@ -534,6 +571,19 @@ watch(
   },
   { deep: true },
 )
+
+const showVisualAidModal = ref(false)
+const currentVisualAidContent = ref('')
+
+const openVisualAidModal = (content: string) => {
+  currentVisualAidContent.value = content
+  showVisualAidModal.value = true
+}
+
+const closeVisualAidModal = () => {
+  showVisualAidModal.value = false
+  currentVisualAidContent.value = ''
+}
 </script>
 
 <style scoped>

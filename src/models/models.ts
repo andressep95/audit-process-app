@@ -42,6 +42,7 @@ export interface AuditSubTask {
   errorPercentage: number // se debe calcular en base al dato ingresado en el campo errorsFound dividido en el dato ingresado en el campo auditedSamples (errorsFound/auditedSamples),
   compliancePercentage: number // Valor inversi al errorPercentage si el errorPercentage feu de 20 este tiene que ser 80
   isCompleted: boolean // Estado de la tarea realizada
+  visualAid?: string // Ayuda visual para la subtarea
   observations: AuditObservations[]
 }
 

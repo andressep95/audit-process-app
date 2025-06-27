@@ -79,6 +79,7 @@ const buttonClass = computed(() =>
     ? 'bg-black hover:bg-gray-800 focus:ring-black'
     : 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
 )
+
 </script>
 
 <style scoped>
