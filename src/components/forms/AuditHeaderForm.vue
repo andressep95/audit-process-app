@@ -44,7 +44,7 @@
                         class="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-black focus:ring-black focus:outline-none"
                       >
                         <option value="" disabled>Seleccionar tienda...</option>
-                        <option v-for="t in stores" :key="t" :value="t">{{ t }}</option>
+                        <option v-for="t in filteredStores" :key="t" :value="t">{{ t }}</option>
                       </select>
                     </div>
 
@@ -151,18 +151,82 @@ const props = defineProps<{
   show: boolean
 }>()
 
-const internalAuditHeaders = ref<AuditHeaders>({ ...props.auditHeaders })
+const internalAuditHeaders = ref<AuditHeaders>({
+  ...props.auditHeaders,
+  country: props.auditHeaders.country || '',
+  storeName: props.auditHeaders.storeName || ''
+})
 
 watch(
-  () => props.auditHeaders,
-  (newValue) => {
-    internalAuditHeaders.value = { ...newValue }
-  },
-  { deep: true, immediate: true },
+  () => internalAuditHeaders.value.country,
+  () => {
+    internalAuditHeaders.value.storeName = ''
+  }
 )
 
-const stores = ['Sucursal Santiago', 'Sucursal La Serena', 'Sucursal Rancagua']
+const storesChile = [
+  'Mall Parque Angamos (Santiago)',
+  'Mall Puerta del Mar (La Serena)',
+  'Mallplaza Copiapó (Copiapó)',
+  'Mall Marina (Viña del Mar)',
+  'Mall Viña Centro (Viña del Mar)',
+  'Portal Rancagua (Rancagua)',
+  'Curicó (Curicó)',
+  'Talca (Talca)',
+  'Chillán (Chillán)',
+  'Mallplaza Trébol (Concepción)',
+  'Concepción (centro)',
+  'Mallplaza Los Ángeles',
+  'Mall Barrio Independencia (Santiago)',
+  'Mallplaza Norte (Santiago)',
+  'Irarrázaval (Santiago)',
+  'Barrio Independencia (Santiago)',
+  'Portal La Reina (Santiago)',
+  'Portal La Dehesa (Lo Barnechea)',
+  'Arauco Maipú (Maipú)',
+  'Mallplaza Oeste (Santiago)',
+  'Mallplaza Los Dominicos (Santiago)',
+  'Mall Paseo Quilín (Santiago)',
+  'Florida Center (Santiago)',
+  'Paseo Ahumada (Santiago)',
+  'Providencia (Santiago)',
+  'Parque Arauco (Las Condes)',
+  'San Bernardo (San Bernardo)',
+  'VIVO CasaCostanera (Providencia)',
+  'Buenaventura (centro Santiago)',
+  'Agustinas (Santiago)',
+  'Patronato (Santiago)',
+  'Portal Ñuñoa (Ñuñoa)',
+  'Apumanque (Las Condes)',
+  'Costanera Center (Santiago)',
+  'Mallplaza Vespucio (La Florida)'
+];
+
+const storesColombia = [
+  'Centro Comercial Multiplaza (Bogotá)',
+  'Centro Comercial Parque La Colina (Bogotá)',
+  'Atlantis Plaza (Bogotá)',
+  'Parque de la 93 (Bogotá)',
+  'Centro Comercial Plaza de las Américas (Bogotá)',
+  'Centro Comercial Plaza Claro (Bogotá)',
+  'Titan Plaza (Bogotá)',      // también aparece como Tienda Online / retiro
+  'Centro Comercial Fontanar (Chía, Cundinamarca)',
+  'Premium Outlet Arauco (Sopó, Cundinamarca)',
+  'Centro Comercial Viva Envigado (Envigado, Antioquia)',
+  'Centro Comercial Cacique (Bucaramanga, Santander)',
+  'Mall Plaza Buenavista (Barranquilla, Atlántico)',
+  'Centro Comercial Jardín Plaza (Cali)'  // inaugurada en abril de 2024
+];
+
 const countries = ['Chile', 'Colombia']
+
+const filteredStores = computed(() => {
+  const country = internalAuditHeaders.value.country
+  if (country === 'Chile') return storesChile
+  if (country === 'Colombia') return storesColombia
+  return []
+})
+
 const stateText = computed(() => {
   return internalAuditHeaders.value.isCompleted ? 'Completado' : 'Incompleto'
 })
