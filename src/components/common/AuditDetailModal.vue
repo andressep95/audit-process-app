@@ -4,9 +4,9 @@
       <div class="absolute inset-0 bg-black bg-opacity-50" @click.self="closeModal"></div>
 
       <div
-        class="modal-content relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col"
+        class="modal-content relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden"
       >
-        <div class="p-6 overflow-y-auto flex-grow">
+        <div class="p-6 overflow-y-auto flex-grow scrollbar-none rounded-b-lg">
           <AuditSummaryCard v-if="processedAuditData" :auditData="processedAuditData" />
           <div
             v-if="
@@ -286,5 +286,13 @@ const nextModule = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none; /* Firefox */
 }
 </style>
