@@ -1,5 +1,5 @@
 // src/utils/moduleTasksInitializers.ts
-import type { AuditModules, Task } from '@/models/models'
+import type { Task } from '@/models/models'
 
 export function getInitialTasksForModule(moduleId: number): Task[] {
   switch (moduleId) {

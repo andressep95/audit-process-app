@@ -97,7 +97,7 @@ const props = defineProps({
   variant: {
     type: String,
     default: 'primary', // 'primary' o 'danger'
-    validator: (value) => ['primary', 'danger'].includes(value),
+    validator: (value: string) => ['primary', 'danger'].includes(value),
   },
   // Si se puede cerrar haciendo clic en el overlay
   closeOnOverlay: {
@@ -140,7 +140,7 @@ const handleOverlayClick = () => {
 }
 
 // Manejo del teclado (ESC para cerrar)
-const handleKeydown = (event) => {
+const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && isVisible.value) {
     handleCancel()
   }
@@ -157,7 +157,6 @@ watch(isVisible, (newValue) => {
 </script>
 
 <style scoped>
-/* Animación de entrada del modal */
 .fixed.inset-0 {
   animation: fadeIn 0.3s ease-out;
 }
@@ -171,7 +170,6 @@ watch(isVisible, (newValue) => {
   }
 }
 
-/* Prevenir scroll del body cuando el modal está abierto */
 .fixed.inset-0 {
   overflow: hidden;
 }

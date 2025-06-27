@@ -297,10 +297,11 @@ const canGoPrevSubtask = computed(() => {
   return currentSubtaskIndex.value > 0
 })
 
+/*
 const canGoNextTask = computed(() => {
   return currentSubModulo.value && currentTaskIndex.value < currentSubModulo.value.tasks.length - 1
 })
-
+*/
 const canGoPrevTask = computed(() => {
   return currentTaskIndex.value > 0
 })

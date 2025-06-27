@@ -1,7 +1,8 @@
 // src/services/AuditService.ts
-import apiClient from '@/services/Api'
+import apiClient from '@/services/api'
 import type { AuditHeaders } from '@/models/models'
 import type { AuditReadHeaders, PaginatedResponse } from '@/models/audit-read-models'
+import type { AuditSummary } from '@/models/AuditSummary'
 
 const AuditService = {
   /**
@@ -25,7 +26,7 @@ const AuditService = {
    * @param size El tamaño de la página (por defecto 6).
    * @returns Una promesa que resuelve con una lista paginada de cabeceras de auditoría.
    */
-  async getAudits(page: number = 0, size: number = 6): Promise<any> {
+  async getAudits(page: number = 0, size: number = 6): Promise<PaginatedResponse<AuditSummary>> {
     // Puedes tipar 'any' o crear un tipo para la respuesta paginada
     try {
       const response = await apiClient.get('/audits', {
@@ -63,7 +64,7 @@ const AuditService = {
    * @param size El tamaño de la página (por defecto 6).
    * @returns Una promesa que resuelve con una lista paginada de cabeceras de auditoría.
    */
-  async getAuditsForStoreChief(page: number = 0, size: number = 6): Promise<any> {
+  async getAuditsForStoreChief(page: number = 0, size: number = 6): Promise<PaginatedResponse<AuditSummary>> {
     // Puedes tipar 'any' o crear un tipo para la respuesta paginada
     try {
       // No se envía 'storeManager' como parámetro ya que el backend lo extrae del token

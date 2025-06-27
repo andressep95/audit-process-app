@@ -203,7 +203,7 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import UserService from '@/services/UserService'
+import UserService from '@/services/userService'
 import UserCreateModal from '@/components/forms/UserCreateForm.vue'
 import UserEditModal from '@/components/forms/UserEditForm.vue'
 import NotificationModal from '@/components/common/NotificationModal.vue'
@@ -396,8 +396,6 @@ const filteredRoles = (roles: string[] | undefined) => {
 const getRoleClass = (role: string) => {
   const classes: { [key: string]: string } = {
     ADMIN: 'text-purple-700 bg-purple-100 border-purple-200',
-    MODERATOR: 'text-blue-700 bg-blue-100 border-blue-200',
-    USER: 'text-gray-700 bg-gray-100 border-gray-200',
     JEFE_TIENDA: 'text-green-700 bg-green-100 border-green-200',
     AUDITOR: 'text-yellow-700 bg-yellow-100 border-yellow-200',
   }

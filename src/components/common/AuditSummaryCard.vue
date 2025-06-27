@@ -262,10 +262,11 @@ import { defineProps } from 'vue'
 import type { AuditReadHeaders } from '@/models/audit-read-models' // <<-- VERIFICA LA RUTA
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
+import type { AuditHeaders } from '@/models/models'
 dayjs.locale('es')
 
-const props = defineProps<{
-  auditData: AuditReadHeaders | null
+defineProps<{
+  auditData: AuditReadHeaders | AuditHeaders
   showActionsSlot?: boolean
 }>()
 

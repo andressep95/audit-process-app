@@ -68,7 +68,7 @@ export interface AuditReadModule {
   compliancePercentage: number
   overallRating: string
   isCompleted: boolean
-  auditTasks: AuditReadTask[] // Coincide con 'auditTasks' en el JSON
+  auditTasks: AuditReadTask[]
 }
 
 export interface AuditReadHeaders {

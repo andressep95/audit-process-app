@@ -64,9 +64,9 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, h, computed } from 'vue'
-import { useAuthStore } from '@/stores/auth' // Asegúrate de que esta ruta sea correcta
+import { useAuthStore } from '@/stores/auth'
 import ConfirmationModal from '@/components/common/ConfirmationModal.vue'
 import logo from '@/assets/img/CasaIdeas-logo.webp'
 
@@ -74,7 +74,7 @@ const auth = useAuthStore()
 const showLogoutModal = ref(false)
 const logoPath = ref(logo)
 
-const createIcon = (pathData) => {
+const createIcon = (pathData: string) => {
   return {
     render() {
       return h(

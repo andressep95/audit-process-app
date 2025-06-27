@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import router from '@/router'
 
 const apiClient = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL as string) || 'http://localhost:8090/api',
+  baseURL: (import.meta.env.VITE_API_URL + 'api' as string) || 'http://localhost:8090/api',
   timeout: 10000,
   withCredentials: true,
 })

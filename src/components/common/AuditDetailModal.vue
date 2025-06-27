@@ -7,8 +7,7 @@
         class="modal-content relative bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col"
       >
         <div class="p-6 overflow-y-auto flex-grow">
-          <AuditSummaryCard :auditData="processedAuditData" />
-
+          <AuditSummaryCard v-if="processedAuditData" :auditData="processedAuditData" />
           <div
             v-if="
               processedAuditData &&
@@ -94,7 +93,8 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from 'vue'
-import type { AuditReadHeaders, AuditReadModule, AuditReadTask } from '@/models/audit-read-models' // Adjust path if needed
+import type { AuditReadHeaders, AuditReadModule, AuditReadTask } from '@/models/audit-read-models'
+import type { AuditHeaders } from '@/models/models'
 import AuditSummaryCard from './AuditSummaryCard.vue'
 import AuditModuleDetail from './AuditModuleDetail.vue'
 import dayjs from 'dayjs'
@@ -104,16 +104,19 @@ import 'dayjs/locale/es'
 dayjs.extend(customParseFormat)
 dayjs.locale('es')
 
+// Props y eventos
 const props = defineProps<{
   show: boolean
-  auditData: AuditReadHeaders | null
+  auditData: AuditReadHeaders | AuditHeaders
 }>()
 
 const emit = defineEmits(['close'])
 
+// Estado interno
 const currentModuleIndex = ref(0)
 const processedAuditData = ref<AuditReadHeaders | null>(null)
 
+// Función auxiliar para parsear códigos tipo "1.2.3"
 const parseCode = (code: string) => {
   if (typeof code === 'string') {
     return code.split('.').map(Number)
@@ -121,14 +124,45 @@ const parseCode = (code: string) => {
   return [0]
 }
 
+// Función para mapear de AuditHeaders a AuditReadHeaders
+function mapAuditHeadersToReadHeaders(data: AuditHeaders): AuditReadHeaders {
+  return {
+    ...data,
+    auditModules: data.auditModules.map((module) => ({
+      ...module,
+      auditTasks: module.tasks.map((task) => ({
+        ...task,
+        auditSubtasks: task.subtasks.map((subtask) => ({
+          ...subtask,
+          auditObservations: subtask.observations,
+        })),
+      })),
+    })),
+  }
+}
+
+// Función para detectar si el objeto es del tipo AuditHeaders
+function isAuditHeaders(data: any): data is AuditHeaders {
+  return (
+    data?.auditModules?.[0]?.tasks !== undefined &&
+    data?.auditModules?.[0]?.auditTasks === undefined
+  )
+}
+
+// Watch principal que transforma y ordena los datos entrantes
 watch(
   () => props.auditData,
   (newData) => {
     if (newData) {
-      // Use JSON.parse(JSON.stringify()) for deep cloning, which handles non-serializable objects better
-      const dataCopy: AuditReadHeaders = JSON.parse(JSON.stringify(newData))
+      let dataCopy: AuditReadHeaders
 
-      // Date parsing logic
+      if (isAuditHeaders(newData)) {
+        dataCopy = mapAuditHeadersToReadHeaders(newData)
+      } else {
+        dataCopy = JSON.parse(JSON.stringify(newData)) as AuditReadHeaders
+      }
+
+      // Formatear fecha
       if (dataCopy.auditDate) {
         let parsedDate = dayjs(dataCopy.auditDate)
         if (!parsedDate.isValid()) {
@@ -144,7 +178,7 @@ watch(
         }
       }
 
-      // Sort modules and tasks
+      // Ordenar módulos y tareas
       if (dataCopy.auditModules) {
         dataCopy.auditModules.forEach((module: AuditReadModule) => {
           if (module.auditTasks) {
@@ -163,12 +197,13 @@ watch(
             })
           }
         })
-        dataCopy.auditModules.sort((a, b) => {
-          return (a.moduleName || '').localeCompare(b.moduleName || '')
-        })
+
+        dataCopy.auditModules.sort((a, b) =>
+          (a.moduleName || '').localeCompare(b.moduleName || ''),
+        )
       }
+
       processedAuditData.value = dataCopy
-      // Reset index only if new data arrives and there are modules
       currentModuleIndex.value = 0
     } else {
       processedAuditData.value = null
@@ -177,16 +212,17 @@ watch(
   { immediate: true, deep: true },
 )
 
+// Resetear índice cuando se abre el modal
 watch(
   () => props.show,
   (newVal) => {
-    // Only reset currentModuleIndex if the modal is shown AND there is processed data
     if (newVal && processedAuditData.value) {
       currentModuleIndex.value = 0
     }
   },
 )
 
+// Métodos de navegación y cierre
 const closeModal = () => {
   emit('close')
 }

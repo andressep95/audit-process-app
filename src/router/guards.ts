@@ -1,7 +1,14 @@
-// src/router/guards.js
+// src/router/guards.ts
+
+import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-export const authGuard = (to, from, next) => {
+// Guard para usuarios autenticados
+export const authGuard = (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) => {
   const auth = useAuthStore()
 
   if (!auth.isAuthenticated) {
@@ -12,7 +19,12 @@ export const authGuard = (to, from, next) => {
   }
 }
 
-export const guestGuard = (to, from, next) => {
+// Guard para invitados (no autenticados)
+export const guestGuard = (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) => {
   const auth = useAuthStore()
 
   if (!auth.isAuthenticated) {
@@ -22,8 +34,12 @@ export const guestGuard = (to, from, next) => {
   }
 }
 
-// Guard mejorado para verificar permisos de ADMIN
-export const adminGuard = (to, from, next) => {
+// Guard exclusivo para usuarios con rol ADMIN
+export const adminGuard = (
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized,
+  next: NavigationGuardNext,
+) => {
   const auth = useAuthStore()
 
   if (!auth.isAuthenticated) {
@@ -31,19 +47,21 @@ export const adminGuard = (to, from, next) => {
     return
   }
 
-  // Usar el método hasRole o isAdmin del store
-  if (auth.isAdmin() || auth.hasRole('ADMIN')) {
+  if (auth.isAdmin?.() || auth.hasRole?.('ADMIN')) {
     next()
   } else {
     console.warn('Acceso denegado: Usuario sin permisos de ADMIN')
-    // Redirigir al dashboard si no tiene permisos
     next('/dashboard')
   }
 }
 
 // Guard genérico para múltiples roles
-export const roleGuard = (allowedRoles) => {
-  return (to, from, next) => {
+export const roleGuard = (allowedRoles: string[]) => {
+  return (
+    to: RouteLocationNormalized,
+    from: RouteLocationNormalized,
+    next: NavigationGuardNext,
+  ) => {
     const auth = useAuthStore()
 
     if (!auth.isAuthenticated) {
@@ -51,7 +69,7 @@ export const roleGuard = (allowedRoles) => {
       return
     }
 
-    if (auth.hasAnyRole(allowedRoles)) {
+    if (auth.hasAnyRole?.(allowedRoles)) {
       next()
     } else {
       console.warn(

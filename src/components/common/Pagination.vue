@@ -137,7 +137,7 @@ const nextPage = () => {
   }
 }
 
-const goToPage = (page) => {
+const goToPage = (page: number | string) => {
   if (page !== '...' && page !== props.currentPage) {
     emit('page-changed', page)
   }

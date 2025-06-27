@@ -95,7 +95,7 @@ import { ref, onMounted, defineAsyncComponent, toRaw, watch, computed } from 'vu
 import dayjs from 'dayjs'
 import AuditHeaderForm from '@/components/forms/AuditHeaderForm.vue'
 import SubModuleCards from '@/components/common/SubModuleCards.vue'
-import AuditService from '@/services/AuditService'
+import AuditService from '@/services/auditService'
 import type { AuditHeaders, AuditModules } from '@/models/models'
 import { decodeJWT } from '@/utils/jwt'
 import { calculateModuleCompliance, calculateAuditTotalCompliance } from '@/utils/auditCalculations'

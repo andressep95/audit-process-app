@@ -177,16 +177,18 @@
     />
 
     <AuditDetailModal
+      v-if="selectedAuditDetail"
       :show="showAuditDetailModal"
       :auditData="selectedAuditDetail"
       @close="closeAuditDetailModal"
     />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import AuditService from '@/services/AuditService'
+import AuditService from '@/services/auditService'
 import NotificationModal from '@/components/common/NotificationModal.vue'
 import PaginationButtons from '@/components/common/Pagination.vue'
 import { useAuthStore } from '@/stores/auth'
